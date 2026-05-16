@@ -5,37 +5,40 @@
 See: .planning/PROJECT.md (updated 2026-05-16)
 
 **Core value:** O usuário consegue nomear e registrar suas emoções no momento em que as sente, criando um histórico que torna o processo terapêutico mais concreto e orientado a dados.
-**Current focus:** Phase 3 — Reports (Frontend UI)
+**Current focus:** Phase 3 — Reports (Complete)
 
 ## Current Position
 
 Phase: 3 of 3 (Reports)
-Plan: 03-02 (Reports Frontend UI)
-Status: Plan 03-02 completed
-Last activity: 2026-05-16 — Plan 03-02 executed
+Plans: 2 of 2 complete
+Status: Complete
+Last activity: 2026-05-16 — Plans 03-01 and 03-02 executed
 
-Progress: [██████████] Plan 03-02 complete (1/2 plans done)
+Progress: [████████████] Phase 3 complete (2/2 plans done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: ~12 min
-- Total execution time: ~54 min
+- Total plans completed: 6
+- Average duration: ~10 min
+- Total execution time: ~62 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 3 | 3 | ~10 min |
-| 3 | 1 | 1 | ~12 min |
+| 3 | 2 | 2 | ~10 min |
 
 **Recent Trend:**
 - feat(1-01): scaffold monorepo
 - feat(1-02): Google OAuth login flow
 - feat(1-03): CouchDB isolation + PouchDB sync
 - feat(3-02): ReportJob types, reports API, ReportSection component, tests
-- Trend: ✓ All 38 tests passing, tsc clean
+- test(3-01): types, config, test contracts, stubs for PDF report backend
+- feat(3-01): handler, service, repository, templates, wire routes
+- feat(3-01): chromedp PDF generator, multi-stage Docker, docker-compose
+- Trend: ✓ All verification criteria passing
 
 *Updated after each plan completion*
 
@@ -61,6 +64,10 @@ Recent decisions affecting current work:
 - **Reports API** at /api/reports with 4 endpoints (create, status, list, download)
 - **5-state machine** for ReportSection (idle → generating → polling → completed | error)
 - **Previous reports always visible** even during generation (not hidden from user)
+- **chromedp** for HTML-to-PDF conversion (chromedp/headless-shell Docker image)
+- **sync.Mutex** in ReportService for single-concurrent PDF generation
+- **filepath.Base** path traversal protection in GetPDF
+- **Mock CouchDB via httptest.Server** for handler tests (no interface mocking)
 
 ### Pending Todos
 
@@ -79,5 +86,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-05-16 17:38
-Stopped at: Phase 3 Plan 02 completed
-Resume file: .planning/phases/03-reports/03-02-SUMMARY.md
+Stopped at: Phase 3 completed (all plans done)
+Resume file: .planning/phases/03-reports/03-01-SUMMARY.md

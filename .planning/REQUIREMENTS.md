@@ -27,9 +27,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Relatórios
 
-- [ ] **REL-01**: User can generate a PDF report covering the period from the last report date to today
-- [ ] **REL-02**: Report includes all registered emotions in the period with their fields (data, sensações, sentimento, contexto, pensamentos)
-- [ ] **REL-03**: Report generation runs asynchronously (job-based), user can poll for completion
+- [x] **REL-01**: User can generate a PDF report covering the period from the last report date to today
+- [x] **REL-02**: Report includes all registered emotions in the period with their fields (data, sensações, sentimento, contexto, pensamentos)
+- [x] **REL-03**: Report generation runs asynchronously (job-based), user can poll for completion
 
 ## v2 Requirements
 
@@ -93,9 +93,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | SYNC-01 | Phase 2 — Core Diary: Registro & Sync | Pending |
 | SYNC-02 | Phase 2 — Core Diary: Registro & Sync | Pending |
 | SYNC-03 | Phase 1 — Foundation & Authentication | Pending |
-| REL-01 | Phase 3 — Reports | Pending |
-| REL-02 | Phase 3 — Reports | Pending |
-| REL-03 | Phase 3 — Reports | Pending |
+| REL-01 | Phase 3 — Reports | Complete |
+| REL-02 | Phase 3 — Reports | Complete |
+| REL-03 | Phase 3 — Reports | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
