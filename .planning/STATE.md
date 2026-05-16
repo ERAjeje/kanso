@@ -5,16 +5,18 @@
 See: .planning/PROJECT.md (updated 2026-05-16)
 
 **Core value:** O usuário consegue nomear e registrar suas emoções no momento em que as sente, criando um histórico que torna o processo terapêutico mais concreto e orientado a dados.
-**Current focus:** Phase 3 — Reports (Complete)
+**Current focus:** Phase 4 — Technical Debt & Dev Experience (Pending)
 
 ## Current Position
 
-Phase: 3 of 3 (Reports)
-Plans: 2 of 2 complete
-Status: Complete
-Last activity: 2026-05-16 — Plans 03-01 and 03-02 executed
+Phase: 3 of 3 (Reports) — MVP complete
+Phase 4: Technical Debt & Dev Experience — Pending
+Plans: 0 of 1 (not yet planned)
+Status: MVP complete — tech debt phase queued
+Last activity: 2026-05-16 — README.md + .env.example + tech debt audit
 
 Progress: [████████████] Phase 3 complete (2/2 plans done)
+Progress: [░░░░░░░░░░░░] Phase 4 (0/1 plans done)
 
 ## Performance Metrics
 
@@ -71,7 +73,14 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+| # | Item | Files | Priority | 
+|---|------|-------|----------|
+| 1 | Extrair URLs hardcoded (`kanso.local`) para env vars do Vite (`VITE_API_URL`, `VITE_COUCHDB_URL`) | `frontend/src/services/auth.ts`, `pouchdb.ts` | 🔴 P0 |
+| 2 | Adicionar middleware CORS no backend (`go-chi/cors`) | `backend/cmd/kanso-api/main.go` | 🔴 P0 |
+| 3 | Configurar `server.proxy` no Vite para dev sem Traefik | `frontend/vite.config.ts` | 🔴 P0 |
+| 4 | Adicionar Traefik ao docker-compose (TLS + roteamento) | `infra/docker-compose.yml`, novos arquivos | 🟡 P1 |
+| 5 | Criar Makefile ou justfile com comandos unificados | — | 🟡 P1 |
+| 6 | Preencher ou remover `nlp-service/` (diretório vazio) | `nlp-service/` | 🟢 P2 |
 
 ### Blockers/Concerns
 
@@ -81,10 +90,13 @@ None yet.
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Tech Debt | Traefik no docker-compose (TLS + roteamento) | Pending | 2026-05-16 |
+| Tech Debt | Makefile/justfile para comandos unificados | Pending | 2026-05-16 |
+| Tech Debt | nlp-service stub (diretório vazio) | Pending | 2026-05-16 |
 
 ## Session Continuity
 
-Last session: 2026-05-16 17:38
-Stopped at: Phase 3 completed (all plans done)
-Resume file: .planning/phases/03-reports/03-01-SUMMARY.md
+Last session: 2026-05-16 — Phase 3 completed
+Stopped at: Phase 4 queued (Tech Debt & Dev Experience)
+Resume with: Resolver P0 items (URLs hardcoded → env vars, CORS, proxy Vite)
+See README.md → Dívida Técnica for full list
