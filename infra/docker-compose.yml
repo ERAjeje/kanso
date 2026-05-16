@@ -1,0 +1,55 @@
+# Kanso Infrastructure — Docker Compose
+# Provides CouchDB and the API service with chromedp PDF generation support.
+#
+# Security:
+# - CouchDB admin password set via COUCHDB_PASSWORD env
+# - chromedp/headless-shell requires seccomp=unconfined (chrome needs clone/fork)
+# - Memory limits prevent resource exhaustion
+
+services:
+  couchdb:
+    image: couchdb:3.5
+    container_name: kanso-couchdb
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+    ports:
+      - "5984:5984"
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    mem_limit: 512m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5984/_up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../backend
+      target: runtime
+    container_name: kanso-api
+    environment:
+      - COUCHDB_URL=http://couchdb:5984
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-dev-client-id}
+      - PDF_TMP_DIR=/tmp/kanso-pdf
+      - CHROMEDP_PATH=/headless-shell/headless-shell
+    ports:
+      - "8080:8080"
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    volumes:
+      - pdf-tmp:/tmp/kanso-pdf
+    mem_limit: 2g
+    security_opt:
+      - seccomp=unconfined
+    restart: unless-stopped
+
+volumes:
+  couchdb-data:
+  pdf-tmp:
