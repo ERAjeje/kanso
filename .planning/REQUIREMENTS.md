@@ -84,23 +84,23 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
-| REG-01 | TBD | Pending |
-| REG-02 | TBD | Pending |
-| REG-03 | TBD | Pending |
-| SYNC-01 | TBD | Pending |
-| SYNC-02 | TBD | Pending |
-| SYNC-03 | TBD | Pending |
-| REL-01 | TBD | Pending |
-| REL-02 | TBD | Pending |
-| REL-03 | TBD | Pending |
+| AUTH-01 | Phase 1 — Foundation & Authentication | Pending |
+| AUTH-02 | Phase 1 — Foundation & Authentication | Pending |
+| AUTH-03 | Phase 1 — Foundation & Authentication | Pending |
+| REG-01 | Phase 2 — Core Diary: Registro & Sync | Pending |
+| REG-02 | Phase 2 — Core Diary: Registro & Sync | Pending |
+| REG-03 | Phase 2 — Core Diary: Registro & Sync | Pending |
+| SYNC-01 | Phase 2 — Core Diary: Registro & Sync | Pending |
+| SYNC-02 | Phase 2 — Core Diary: Registro & Sync | Pending |
+| SYNC-03 | Phase 1 — Foundation & Authentication | Pending |
+| REL-01 | Phase 3 — Reports | Pending |
+| REL-02 | Phase 3 — Reports | Pending |
+| REL-03 | Phase 3 — Reports | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-16*
