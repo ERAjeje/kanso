@@ -9,6 +9,7 @@ type Config struct {
 	CouchDBPass   string
 	JWTSecret     string
 	GoogleClienID string
+	PDFTmpDir     string
 }
 
 func Load() *Config {
@@ -19,6 +20,7 @@ func Load() *Config {
 		CouchDBPass:   getEnv("COUCHDB_PASSWORD", ""),
 		JWTSecret:     getEnv("JWT_SECRET", ""),
 		GoogleClienID: getEnv("GOOGLE_CLIENT_ID", ""),
+		PDFTmpDir:     getEnv("PDF_TMP_DIR", "/tmp/kanso-pdf"),
 	}
 }
 

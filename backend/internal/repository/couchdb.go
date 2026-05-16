@@ -70,6 +70,29 @@ func (c *CouchDB) CreateOrUpdateUser(doc *UserDoc) error {
 	return nil
 }
 
+type ReportJobStatus string
+
+const (
+	StatusPending   ReportJobStatus = "pending"
+	StatusProcessing ReportJobStatus = "processing"
+	StatusDone      ReportJobStatus = "done"
+	StatusFailed    ReportJobStatus = "failed"
+)
+
+type ReportJobDoc struct {
+	ID            string          `json:"_id,omitempty"`
+	Rev           string          `json:"_rev,omitempty"`
+	Type          string          `json:"type"`
+	UserSub       string          `json:"userSub"`
+	Status        ReportJobStatus `json:"status"`
+	PeriodStart   string          `json:"periodStart,omitempty"`
+	PeriodEnd     string          `json:"periodEnd,omitempty"`
+	CreatedAt     string          `json:"createdAt,omitempty"`
+	CompletedAt   string          `json:"completedAt,omitempty"`
+	FileName      string          `json:"fileName,omitempty"`
+	ErrorMessage  string          `json:"errorMessage,omitempty"`
+}
+
 func (c *CouchDB) GetUser(id string) (*UserDoc, error) {
 	url := fmt.Sprintf("%s/usuarios/%s", c.baseURL, id)
 	req, _ := http.NewRequest("GET", url, nil)
