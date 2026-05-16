@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/AuthGuard.tsx","./src/components/SyncStatus.tsx","./src/hooks/useAuth.tsx","./src/pages/Login.tsx","./src/pages/Register.tsx","./src/services/auth.ts","./src/services/pouchdb.ts","./src/types/pouchdb.d.ts"],"version":"5.8.3"}
