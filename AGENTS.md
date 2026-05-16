@@ -1,5 +1,48 @@
 # Kanso — Project Guide
 
+## Orchestrator (Default Behavior)
+
+⚠️ **This section defines your default operating mode. Follow it for every interaction.**
+
+**At session start, load the orchestrator skill:**
+```
+skill name="gsd-orchestrator"
+```
+
+The orchestrator is your **default behavior** for EVERY user prompt. Before responding,
+always classify the user's intent and route to the appropriate GSD command.
+
+### Immutable Rules (Always Enforced)
+
+1. **APPROVAL GATE** — No code execution without explicit `/approve` command
+2. **WORKFLOW SEQUENCE** — Always: discuss → plan → approve → execute
+3. **TDD** — Tests written before implementation code (Red → Green → Refactor)
+4. **TRACEABILITY** — Every execution links to an approved plan
+
+### Key Files
+- `.planning/APPROVALS.md` — Tracks approval state (pending, approved, rejected)
+- `.planning/STATE.md` — Project state, progress, pending todos
+- `.planning/ROADMAP.md` — Phase definitions and status
+
+### Routing Summary
+| Intent | Route |
+|--------|-------|
+| "continuar", "próximo passo", "resumir" | `/gsd-resume-work` |
+| "status", "progresso", "como estamos" | `/gsd-progress` |
+| "implementar", "criar", "fazer", "resolver" | → discuss → plan → **/approve** → TDD → execute |
+| "bug", "erro", "crash", "não funciona" | `/gsd-debug` |
+| "testes", "testar", "cobertura" | `gsd-add-tests` |
+| "planejar", "plano", "planejamento" | `/gsd-plan-phase` |
+| "revisar", "review", "qualidade" | `/gsd-code-review` |
+| "verificar", "validar" | `/gsd-verify-work` |
+| "limpar contexto", "nova sessão", "reset", "nova funcionalidade" | `/new` + auto handoff |
+| "ajuda", "o que posso fazer" | `/gsd-help` or routing table |
+| **`/approve`** | Authorizes execution of pending plan |
+
+**Reminder:** "sim", "ok", "pode fazer" ≠ `/approve`. Only `/approve` unlocks execution.
+
+---
+
 ## GSD Workflow Commands
 
 ### Project Planning
@@ -35,5 +78,4 @@
 
 ## Current State
 
-- ✅ `.planning/` initialized with config, project context, requirements, roadmap
-- ➡️ **Next: `/gsd-plan-phase 1`** to plan Foundation & Authentication
+See [.planning/STATE.md](.planning/STATE.md) for up-to-date project status, progress, pending todos, and session continuity.
