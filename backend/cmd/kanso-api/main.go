@@ -11,6 +11,7 @@ import (
 	"github.com/edson/kanso-api/internal/config"
 	"github.com/edson/kanso-api/internal/handler"
 	"github.com/edson/kanso-api/internal/middleware"
+	"github.com/edson/kanso-api/internal/pdf"
 	"github.com/edson/kanso-api/internal/repository"
 	"github.com/edson/kanso-api/internal/service"
 )
@@ -21,6 +22,10 @@ func main() {
 	couchRepo := repository.NewCouchDB(cfg.CouchDBURL, cfg.CouchDBUser, cfg.CouchDBPass)
 	authSvc := service.NewAuth(cfg.GoogleClienID, cfg.JWTSecret, couchRepo)
 	authHandler := handler.NewAuth(authSvc, cfg.JWTSecret)
+
+	pdfGen := pdf.NewGenerator("", 30*time.Second)
+	reportSvc := service.NewReportService(couchRepo, pdfGen, cfg)
+	reportHandler := handler.NewReportHandler(reportSvc, cfg)
 
 	r := chi.NewRouter()
 	r.Use(chimiddleware.Logger)
@@ -36,6 +41,10 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.JWTRequired([]byte(cfg.JWTSecret)))
 		r.Get("/api/auth/me", authHandler.HandleMe)
+		r.Post("/api/reports", reportHandler.HandleRequestReport)
+		r.Get("/api/reports", reportHandler.HandleListReports)
+		r.Get("/api/reports/{id}", reportHandler.HandleGetReport)
+		r.Get("/api/reports/{id}/download", reportHandler.HandleDownload)
 	})
 
 	log.Printf("Starting server on :%s", cfg.Port)

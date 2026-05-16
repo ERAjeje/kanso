@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/edson/kanso-api/internal/config"
+	"github.com/edson/kanso-api/internal/pdf"
 	"github.com/edson/kanso-api/internal/repository"
 )
 
@@ -18,7 +19,8 @@ func setupTestReportService(t *testing.T) (*ReportService, *repository.CouchDB) 
 
 	// Repository points to nothing — tests verify method signatures and error handling
 	couchRepo := repository.NewCouchDB("http://localhost:15984", "admin", "pass")
-	svc := NewReportService(couchRepo, cfg)
+	gen := pdf.NewGenerator("", 5*time.Second)
+	svc := NewReportService(couchRepo, gen, cfg)
 	return svc, couchRepo
 }
 
