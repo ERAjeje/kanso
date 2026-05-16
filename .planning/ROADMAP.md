@@ -56,6 +56,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
   - @headlessui/react v2 Combobox for sentimento, lucide-react for icons
   - Brazilian Portuguese (pt-BR) for all user-facing copy
 **UI hint**: yes
+**Completed**: 2026-05-16
 
 ### Phase 3: Reports
 **Goal**: Users can generate and download PDF reports of their emotional history
@@ -68,7 +69,10 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
   3. Report includes all registered emotions in the period with date/time, sensações, sentimento, contexto, and pensamentos
   4. Report generation runs asynchronously — user can continue using the app while it processes
   5. User can check report status and download the PDF when ready
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+**Waves**:
+- **Wave 1** *(Plan 01)* — Backend: report generation handler, chromedp PDF rendering, async job queue with status polling
+- **Wave 2** *(blocked on Wave 1 completion)* *(Plan 02)* — Frontend: ReportJob types, reports API client, ReportSection component, Profile integration, tests
 **UI hint**: yes
 
 ## Progress
@@ -76,5 +80,5 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Authentication | 3/3 | Complete | 2026-05-16 |
-| 2. Core Diary — Registro & Sync | 3/3 | Ready to execute | 2026-05-16 |
-| 3. Reports | 0/TBD | Not started | - |
+| 2. Core Diary — Registro & Sync | 3/3 | Complete | 2026-05-16 |
+| 3. Reports | 1/2 | In progress (Plan 02 done) | - |
