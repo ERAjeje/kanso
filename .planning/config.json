@@ -1,0 +1,20 @@
+{
+  "mode": "interactive",
+  "granularity": "standard",
+  "parallelization": true,
+  "commit_docs": true,
+  "model_profile": "custom",
+  "models": {
+    "researcher": "qwen3.6-plus",
+    "synthesizer": "qwen3.6-plus",
+    "roadmapper": "qwen3.6-plus",
+    "implementation": "deepseek-v4-flash"
+  },
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": true,
+    "auto_advance": false
+  }
+}
