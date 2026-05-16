@@ -23,3 +23,18 @@ export interface SentimentoDoc {
 }
 
 export type SyncState = 'online' | 'offline' | 'syncing'
+
+export interface ReportJob {
+  _id: string
+  _rev?: string
+  type: 'relatorio'
+  userId: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  requestedAt: string
+  completedAt?: string
+  periodoInicio: string
+  periodoFim: string
+  totalRegistros?: number
+  downloadUrl?: string
+  errorMessage?: string
+}

@@ -1,5 +1,6 @@
 import { registrosDB, sentimentosDB, getUserId } from './pouchdb'
 import type { RegistroDoc, SentimentoDoc } from '../types'
+import type PouchDB from 'pouchdb-browser'
 
 type RegistroInput = Omit<RegistroDoc, '_id' | '_rev' | 'type' | 'userId' | 'createdAt' | 'updatedAt'>
 
@@ -32,7 +33,7 @@ export async function saveSentimento(nome: string): Promise<SentimentoDoc> {
 export async function getSentimentos(): Promise<SentimentoDoc[]> {
   const result = await sentimentosDB.allDocs<SentimentoDoc>({ include_docs: true })
   return result.rows
-    .map(row => row.doc!)
-    .filter(doc => doc.type === 'sentimento')
-    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+      .map((row: PouchDB.Core.Row<SentimentoDoc>) => row.doc!)
+    .filter((doc: SentimentoDoc) => doc.type === 'sentimento')
+    .sort((a: SentimentoDoc, b: SentimentoDoc) => a.nome.localeCompare(b.nome, 'pt-BR'))
 }

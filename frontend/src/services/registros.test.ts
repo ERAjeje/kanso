@@ -50,7 +50,7 @@ describe('saveRegistro', () => {
 describe('saveSentimento', () => {
   it('saves a normalized sentimento document', async () => {
     mockSentimentoPut.mockResolvedValue({ ok: true })
-    const doc = await saveSentimento('  Ansiedade  ')
+    await saveSentimento('  Ansiedade  ')
     expect(mockSentimentoPut).toHaveBeenCalledOnce()
     expect(mockSentimentoPut).toHaveBeenCalledWith(
       expect.objectContaining({

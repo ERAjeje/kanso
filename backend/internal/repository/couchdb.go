@@ -1,0 +1,309 @@
+package repository
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"time"
+)
+
+type CouchDB struct {
+	baseURL    string
+	adminUser  string
+	adminPass  string
+	httpClient *http.Client
+}
+
+type UserDoc struct {
+	ID        string `json:"_id,omitempty"`
+	Rev       string `json:"_rev,omitempty"`
+	Type      string `json:"type"`
+	Sub       string `json:"sub"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	CreatedAt string `json:"createdAt,omitempty"`
+	UpdatedAt string `json:"updatedAt,omitempty"`
+}
+
+func NewCouchDB(baseURL, adminUser, adminPass string) *CouchDB {
+	return &CouchDB{
+		baseURL:    baseURL,
+		adminUser:  adminUser,
+		adminPass:  adminPass,
+		httpClient: &http.Client{Timeout: 10 * time.Second},
+	}
+}
+
+func (c *CouchDB) CreateOrUpdateUser(doc *UserDoc) error {
+	doc.Type = "usuario"
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	existing, err := c.GetUser(doc.ID)
+	if err != nil {
+		return fmt.Errorf("couchdb get before put: %w", err)
+	}
+
+	if existing != nil {
+		doc.Rev = existing.Rev
+		doc.CreatedAt = existing.CreatedAt
+	} else {
+		doc.CreatedAt = now
+	}
+	doc.UpdatedAt = now
+
+	url := fmt.Sprintf("%s/usuarios/%s", c.baseURL, doc.ID)
+	body, _ := json.Marshal(doc)
+	req, _ := http.NewRequest("PUT", url, bytes.NewReader(body))
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("couchdb put: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("couchdb put status: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+type ReportJobStatus string
+
+const (
+	StatusPending   ReportJobStatus = "pending"
+	StatusProcessing ReportJobStatus = "processing"
+	StatusDone      ReportJobStatus = "done"
+	StatusFailed    ReportJobStatus = "failed"
+)
+
+type ReportJobDoc struct {
+	ID            string          `json:"_id,omitempty"`
+	Rev           string          `json:"_rev,omitempty"`
+	Type          string          `json:"type"`
+	UserSub       string          `json:"userSub"`
+	Status        ReportJobStatus `json:"status"`
+	PeriodStart   string          `json:"periodStart,omitempty"`
+	PeriodEnd     string          `json:"periodEnd,omitempty"`
+	CreatedAt     string          `json:"createdAt,omitempty"`
+	CompletedAt   string          `json:"completedAt,omitempty"`
+	FileName      string          `json:"fileName,omitempty"`
+	ErrorMessage  string          `json:"errorMessage,omitempty"`
+}
+
+// --- Report Job Repository Methods ---
+
+type couchDBPutResponse struct {
+	ID  string `json:"id"`
+	Rev string `json:"rev"`
+	OK  bool   `json:"ok"`
+}
+
+type mangoQuery struct {
+	Selector   map[string]interface{} `json:"selector"`
+	Sort       []map[string]string    `json:"sort,omitempty"`
+	Limit      int                    `json:"limit,omitempty"`
+	Execution  bool                   `json:"execution_stats,omitempty"`
+}
+
+type mangoResponse struct {
+	Docs []json.RawMessage `json:"docs"`
+}
+
+func (c *CouchDB) putDoc(db, id string, doc interface{}) error {
+	url := fmt.Sprintf("%s/%s/%s", c.baseURL, db, id)
+	body, err := json.Marshal(doc)
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+	req, err := http.NewRequest("PUT", url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("put: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("put status: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+func (c *CouchDB) CreateReportJob(job *ReportJobDoc) error {
+	job.Type = "relatorio"
+	if job.Status == "" {
+		job.Status = StatusPending
+	}
+	if job.CreatedAt == "" {
+		job.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+	}
+	return c.putDoc("relatorios", job.ID, job)
+}
+
+func (c *CouchDB) GetReportJob(id string) (*ReportJobDoc, error) {
+	url := fmt.Sprintf("%s/relatorios/%s", c.baseURL, id)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("get: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("get status: %d", resp.StatusCode)
+	}
+
+	var doc ReportJobDoc
+	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+	return &doc, nil
+}
+
+func (c *CouchDB) UpdateReportJobStatus(id, rev string, status ReportJobStatus, fileName, errorMsg string) error {
+	url := fmt.Sprintf("%s/relatorios/%s", c.baseURL, id)
+
+	// First get current doc to update
+	getReq, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("new get request: %w", err)
+	}
+	getReq.SetBasicAuth(c.adminUser, c.adminPass)
+	getResp, err := c.httpClient.Do(getReq)
+	if err != nil {
+		return fmt.Errorf("get before update: %w", err)
+	}
+	defer getResp.Body.Close()
+
+	var current ReportJobDoc
+	if err := json.NewDecoder(getResp.Body).Decode(&current); err != nil {
+		return fmt.Errorf("decode current: %w", err)
+	}
+
+	current.Status = status
+	current.CompletedAt = time.Now().UTC().Format(time.RFC3339)
+	current.FileName = fileName
+	current.ErrorMessage = errorMsg
+
+	body, err := json.Marshal(current)
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
+	}
+
+	req, err := http.NewRequest("PUT", url, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("put: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("put status: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+func (c *CouchDB) ListReportJobsByUser(sub string) ([]ReportJobDoc, error) {
+	selector := map[string]interface{}{
+		"type":    "relatorio",
+		"userSub": sub,
+	}
+	query := mangoQuery{
+		Selector: selector,
+		Sort:     []map[string]string{{"createdAt": "desc"}},
+		Limit:    50,
+	}
+
+	body, err := json.Marshal(query)
+	if err != nil {
+		return nil, fmt.Errorf("marshal query: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/relatorios/_find", c.baseURL)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("find: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("find status: %d", resp.StatusCode)
+	}
+
+	var mResp mangoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&mResp); err != nil {
+		return nil, fmt.Errorf("decode response: %w", err)
+	}
+
+	jobs := make([]ReportJobDoc, 0, len(mResp.Docs))
+	for _, raw := range mResp.Docs {
+		var job ReportJobDoc
+		if err := json.Unmarshal(raw, &job); err != nil {
+			return nil, fmt.Errorf("unmarshal job: %w", err)
+		}
+		jobs = append(jobs, job)
+	}
+	return jobs, nil
+}
+
+func (c *CouchDB) ReportJobExists(id string) (bool, error) {
+	job, err := c.GetReportJob(id)
+	if err != nil {
+		return false, err
+	}
+	return job != nil, nil
+}
+
+func (c *CouchDB) GetUser(id string) (*UserDoc, error) {
+	url := fmt.Sprintf("%s/usuarios/%s", c.baseURL, id)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("couchdb get: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("couchdb get status: %d", resp.StatusCode)
+	}
+
+	var doc UserDoc
+	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
+		return nil, fmt.Errorf("couchdb decode: %w", err)
+	}
+	return &doc, nil
+}
