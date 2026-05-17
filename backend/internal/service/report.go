@@ -33,8 +33,23 @@ func NewReportService(couchRepo *repository.CouchDB, gen *pdf.Generator, cfg *co
 
 // RequestReport creates a new report job, generates the PDF synchronously,
 // and updates the job status. The mutex ensures only one generation runs at a time.
-func (s *ReportService) RequestReport(ctx context.Context, sub, periodStart, periodEnd string) (string, error) {
+// periodStart is computed from the last completed report (or empty if none).
+// periodEnd is the current time.
+func (s *ReportService) RequestReport(ctx context.Context, sub string) (string, error) {
 	jobID := fmt.Sprintf("relatorio_%s_%d", sub, time.Now().UnixNano())
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	// Compute periodStart from last completed report
+	periodStart := ""
+	last, err := s.couchRepo.GetLastCompletedReport(sub)
+	if err != nil {
+		log.Printf("failed to get last completed report: %v", err)
+	}
+	if last != nil && last.PeriodEnd != "" {
+		periodStart = last.PeriodEnd
+	}
+
+	periodEnd := now
 
 	job := &repository.ReportJobDoc{
 		ID:          jobID,
@@ -43,7 +58,7 @@ func (s *ReportService) RequestReport(ctx context.Context, sub, periodStart, per
 		Status:      repository.StatusPending,
 		PeriodStart: periodStart,
 		PeriodEnd:   periodEnd,
-		CreatedAt:   time.Now().UTC().Format(time.RFC3339),
+		CreatedAt:   now,
 	}
 
 	if err := s.couchRepo.CreateReportJob(job); err != nil {
