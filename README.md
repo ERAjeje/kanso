@@ -1,5 +1,17 @@
 # Kanso — Diário Emocional Offline-First
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-1.26-00ADD8?logo=go" alt="Go 1.26"/>
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19"/>
+  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript" alt="TypeScript 5.8"/>
+  <img src="https://img.shields.io/badge/Tailwind-4.3-06B6D4?logo=tailwindcss" alt="Tailwind 4.3"/>
+  <img src="https://img.shields.io/badge/PWA-Offline--first-5A0FC8?logo=pwa" alt="PWA"/>
+  <img src="https://img.shields.io/badge/CouchDB-3.5-E42528?logo=apachecouchdb" alt="CouchDB 3.5"/>
+  <img src="https://img.shields.io/badge/Docker-2496ED?logo=docker" alt="Docker"/>
+  <img src="https://img.shields.io/badge/Traefik-3-24A1C1?logo=traefikproxy" alt="Traefik 3"/>
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"/>
+</p>
+
 **Kanso** (japonês 簡素 — simplicidade, clareza, essencialidade) é um PWA de diário emocional
 offline-first que ajuda o usuário a nomear e registrar emoções no momento em que são percebidas,
 com sincronização automática para a nuvem e geração de relatórios PDF para compartilhar com
@@ -101,18 +113,16 @@ cp .env.example .env
 # Edite o .env com seus valores
 ```
 
-### 4. Suba a infraestrutura (CouchDB + API)
+### 4. Suba a infraestrutura
 
 ```bash
-cd infra
-docker compose up
+make up
 ```
 
-Isso inicia:
+Isso inicia via Docker Compose:
+- **Traefik** em `localhost:443` (TLS)
 - **CouchDB** em `localhost:5984`
 - **API Go** em `localhost:8080`
-
-Aguarde o health check do CouchDB antes de usar o sistema.
 
 ### 5. Inicie o frontend
 
@@ -122,15 +132,14 @@ Em outro terminal:
 cd frontend
 pnpm install
 pnpm dev
+# ou: make dev
 ```
 
 O frontend estará disponível em `http://localhost:5173`.
 
-> **⚠️ Limitação atual:** O frontend possui URLs hardcoded para `https://kanso.local/api`
-> e `https://kanso.local/db` (veja a seção [Dívida Técnica](#-dívida-técnica) abaixo).
-> Para desenvolvimento local sem Traefik, você precisará:
-> - Alterar `API_BASE` em `frontend/src/services/auth.ts` para `http://localhost:8080/api`
-> - Alterar `COUCHDB_URL` em `frontend/src/services/pouchdb.ts` para `http://localhost:5984/db`
+O Vite proxy roteia automaticamente:
+- `/api` → `http://localhost:8080`
+- `/db` → `http://localhost:5984`
 
 ### Alternativa: rodar o backend local (sem Docker)
 
@@ -184,8 +193,10 @@ kanso/
 │   │   └── types/             # TypeScript types
 │   └── vite.config.ts
 ├── infra/
-│   └── docker-compose.yml     # CouchDB + API
-├── nlp-service/               # (vazio — v2)
+│   ├── docker-compose.yml     # CouchDB + API + Traefik
+│   └── traefik/               # Configuração do Traefik v3
+├── Makefile                   # Comandos unificados (up/down/dev/test)
+├── nlp-service/               # (v2 — análise NLP de emoções)
 ├── .env.example               # Exemplo de variáveis de ambiente
 └── README.md
 ```
@@ -228,9 +239,11 @@ kanso/
 
 ### Frontend (`frontend/`)
 
-| Variável | Descrição |
-|----------|-----------|
-| `VITE_GOOGLE_CLIENT_ID` | Client ID do Google OAuth (mesmo do backend) |
+| Variável | Padrão | Descrição |
+|----------|--------|-----------|
+| `VITE_API_URL` | `/api` | URL base da API (proxy Vite em dev) |
+| `VITE_COUCHDB_URL` | `/db` | URL base do CouchDB (proxy Vite em dev) |
+| `VITE_GOOGLE_CLIENT_ID` | — | Client ID do Google OAuth (mesmo do backend) |
 
 ### Docker Compose (`infra/docker-compose.yml`)
 
@@ -242,28 +255,20 @@ kanso/
 
 ---
 
-## 🧱 Dívida Técnica
+## Dívida Técnica
 
-Os itens abaixo impedem o setup de desenvolvimento fora do ecossistema Docker completo
-e devem ser resolvidos antes de novas funcionalidades:
+Todos os itens identificados durante o MVP foram resolvidos na Phase 4:
 
-| # | Item | Arquivos | Impacto | Prioridade |
-|---|------|----------|---------|------------|
-| 1 | **URLs da API hardcoded** | `auth.ts` (`https://kanso.local/api`), `pouchdb.ts` (`https://kanso.local/db`) | Bloqueia dev em localhost sem editar código | 🔴 P0 |
-| 2 | **Sem middleware CORS no backend** | `main.go` (não usa `go-chi/cors`) | Requisições cross-origin falham no dev sem proxy | 🔴 P0 |
-| 3 | **Frontend sem proxy Vite** | `vite.config.ts` (sem `server.proxy`) | Depende de Traefik para roteamento dev | 🔴 P0 |
-| 4 | **Sem `.env.example`** | — | Novo dev não sabe quais variáveis configurar | 🟡 P1 |
-| 5 | **Traefik ausente do docker-compose** | `infra/docker-compose.yml` | Sem HTTPS/TLS local; PWA service worker não funciona | 🟡 P1 |
-| 6 | **Sem Makefile / justfile** | — | Cada serviço usa comando diferente; sem `make up` unificado | 🟡 P1 |
-| 7 | **nlp-service vazio** | `nlp-service/` (diretório vazio) | Falso positivo — parece implementado mas não está | 🟢 P2 |
+| # | Item | Status | Resolvido Em |
+|---|------|--------|-------------|
+| 1 | **URLs da API hardcoded** → env vars `VITE_API_URL` / `VITE_COUCHDB_URL` | ✅ | 2026-05-17 |
+| 2 | **CORS middleware** (`go-chi/cors` no backend) | ✅ | 2026-05-17 |
+| 3 | **Vite proxy** (`/api` → `:8080`, `/db` → `:5984`) | ✅ | 2026-05-17 |
+| 4 | **Traefik** no docker-compose com TLS | ✅ | 2026-05-17 |
+| 5 | **Makefile** com comandos unificados | ✅ | 2026-05-17 |
+| 6 | **nlp-service/README.md** com documentação v2 | ✅ | 2026-05-17 |
 
-### Próximos passos (execução imediata)
-
-1. Extrair `API_BASE` e `COUCHDB_URL` para variáveis de ambiente do Vite (`VITE_API_URL`,
-   `VITE_COUCHDB_URL`) e atualizar os serviços
-2. Adicionar middleware CORS no backend (`go-chi/cors`)
-3. Configurar `server.proxy` no `vite.config.ts` para rotear `/api` e `/db` para os
-   serviços corretos em dev
+**Ambiente de desenvolvimento local** configurado: `make up` + `make dev` sem dependência de DNS ou TLS.
 
 ---
 

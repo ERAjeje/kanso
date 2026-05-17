@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-05-16)
 
 **Core value:** O usuário consegue nomear e registrar suas emoções no momento em que as sente, criando um histórico que torna o processo terapêutico mais concreto e orientado a dados.
-**Current focus:** Phase 4 — Technical Debt & Dev Experience (Pending)
+**Current focus:** All v1 MVP phases complete — tagging v0.1.0
 
 ## Current Position
 

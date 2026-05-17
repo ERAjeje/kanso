@@ -6,12 +6,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 ## Pending Approval
 
-| Field | Value |
-|-------|-------|
-| **Plan ID** | 01 |
-| **Description** | Resolve All Tech Debt (P0 + P1 + P2) — Env vars, CORS, Vite proxy, Traefik, Makefile, nlp-service docs |
-| **Requested At** | 2026-05-17 |
-| **Requested By** | User |
+*None — all plans approved and executed.*
 
 ---
 
@@ -35,6 +30,8 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 | Date | Plan | Action | Detail |
 |------|------|--------|--------|
+| 2026-05-17 | 04-01 | approved | Tech Debt resolution |
+| 2026-05-17 | 04-01 | executed | Tech Debt resolution |
 
 ---
 
