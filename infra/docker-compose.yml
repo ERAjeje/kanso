@@ -50,12 +50,10 @@ services:
       context: ../backend
       target: runtime
     container_name: kanso-api
+    env_file: ../.env
     environment:
       - COUCHDB_URL=http://couchdb:5984
       - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
-      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-dev-client-id}
       - PDF_TMP_DIR=/tmp/kanso-pdf
       - CHROMEDP_PATH=/headless-shell/headless-shell
     ports:
