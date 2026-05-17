@@ -19,7 +19,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 | Plan ID | Description | Approved At | Executed | 
 |---------|-------------|-------------|----------|
-| — | — | — | — |
+| 04-01 | Resolve All Tech Debt (P0 + P1 + P2) | 2026-05-17 | 2026-05-17 |
 
 ---
 

@@ -7,6 +7,18 @@
 # - Memory limits prevent resource exhaustion
 
 services:
+  traefik:
+    image: traefik:v3
+    container_name: kanso-traefik
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik
+      - ./traefik/certs:/etc/traefik/certs
+    restart: unless-stopped
+
   couchdb:
     image: couchdb:3.5
     container_name: kanso-couchdb
@@ -24,6 +36,14 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.couchdb.rule=Host(`kanso.local`) && PathPrefix(`/db`)"
+      - "traefik.http.routers.couchdb.entrypoints=websecure"
+      - "traefik.http.routers.couchdb.tls=true"
+      - "traefik.http.services.couchdb.loadbalancer.server.port=5984"
+      - "traefik.http.routers.couchdb.middlewares=couchdb-strip"
+      - "traefik.http.middlewares.couchdb-strip.stripprefix.prefixes=/db"
 
   api:
     build:
@@ -49,6 +69,12 @@ services:
     security_opt:
       - seccomp=unconfined
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`kanso.local`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
 
 volumes:
   couchdb-data:

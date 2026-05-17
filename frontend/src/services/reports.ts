@@ -1,7 +1,7 @@
 import { authenticatedFetch } from './auth'
 import type { ReportJob } from '../types'
 
-const API_BASE = 'https://kanso.local/api'
+const API_BASE = import.meta.env.VITE_API_URL
 
 export async function createReport(): Promise<ReportJob> {
   const res = await authenticatedFetch(`${API_BASE}/reports`, {

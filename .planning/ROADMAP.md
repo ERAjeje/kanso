@@ -9,7 +9,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - [x] **Phase 1: Foundation & Authentication** — Infrastructure setup, Google OAuth, JWT auth, CouchDB isolation
 - [ ] **Phase 2: Core Diary — Registro & Sync** - Emotion registration form, offline-first PouchDB storage, cloud sync
 - [x] **Phase 3: Reports** - PDF report generation with async job infrastructure
-- [ ] **Phase 4: Technical Debt & Dev Experience** - Env vars, CORS, Vite proxy, Traefik, Makefile, nlp-service docs
+- [x] **Phase 4: Technical Debt & Dev Experience** - Env vars, CORS, Vite proxy, Traefik, Makefile, nlp-service docs
 
 ## Phase Details
 
@@ -102,4 +102,4 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 1. Foundation & Authentication | 3/3 | Complete | 2026-05-16 |
 | 2. Core Diary — Registro & Sync | 3/3 | Complete | 2026-05-16 |
 | 3. Reports | 2/2 | Complete | 2026-05-16 |
-| 4. Technical Debt & Dev Experience | 0/1 | Pending | — |
+| 4. Technical Debt & Dev Experience | 1/1 | Complete | 2026-05-17 |

@@ -1,0 +1,11 @@
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/kanso.local.pem
+      keyFile: /etc/traefik/certs/kanso.local-key.pem
+
+http:
+  middlewares:
+    redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
