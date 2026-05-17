@@ -22,7 +22,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | fix-relatorio-contract | Remover periodStart/periodEnd do contrato — backend calcula datas internamente | 2026-05-17 | 2026-05-17 |
 | 06-01 | Push Notifications — backend + frontend (SW + settings) + scheduler + infra | 2026-05-17 | 2026-05-17 |
 | fix-push-ux | Push notification UX: toasts para feedback visual | 2026-05-17 | 2026-05-17 |
-| 06-02 | Push preferences via PouchDB sync (offline-first) | 2026-05-17 | — |
+| 06-02 | Push preferences via PouchDB sync (offline-first) | 2026-05-17 | 2026-05-17 |
 
 ---
 
@@ -54,6 +54,8 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 2026-05-17 | 06-01 | executed | Push Notifications — implementado + testado |
 | 2026-05-17 | fix-push-ux | approved | Push UX: toasts para feedback visual em erros silenciosos |
 | 2026-05-17 | fix-push-ux | executed | useAuth.tsx + Profile.tsx: toasts adicionados em falhas silenciosas |
+| 2026-05-17 | 06-02 | approved | Push preferences via PouchDB sync |
+| 2026-05-17 | 06-02 | executed | PouchDB preferenciasDB + push.ts rewrite + backend atualizado |
 
 ---
 
