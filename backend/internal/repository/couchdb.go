@@ -275,6 +275,57 @@ func (c *CouchDB) ListReportJobsByUser(sub string) ([]ReportJobDoc, error) {
 	return jobs, nil
 }
 
+func (c *CouchDB) GetLastCompletedReport(sub string) (*ReportJobDoc, error) {
+	selector := map[string]interface{}{
+		"type":    "relatorio",
+		"userSub": sub,
+		"status":  StatusDone,
+	}
+	query := mangoQuery{
+		Selector: selector,
+		Sort:     []map[string]string{{"createdAt": "desc"}},
+		Limit:    1,
+	}
+
+	body, err := json.Marshal(query)
+	if err != nil {
+		return nil, fmt.Errorf("marshal query: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/relatorios/_find", c.baseURL)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("find: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("find status: %d", resp.StatusCode)
+	}
+
+	var mResp mangoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&mResp); err != nil {
+		return nil, fmt.Errorf("decode response: %w", err)
+	}
+
+	if len(mResp.Docs) == 0 {
+		return nil, nil
+	}
+
+	var job ReportJobDoc
+	if err := json.Unmarshal(mResp.Docs[0], &job); err != nil {
+		return nil, fmt.Errorf("unmarshal job: %w", err)
+	}
+	return &job, nil
+}
+
 func (c *CouchDB) ReportJobExists(id string) (bool, error) {
 	job, err := c.GetReportJob(id)
 	if err != nil {

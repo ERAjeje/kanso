@@ -23,20 +23,12 @@ func NewReportHandler(svc *service.ReportService, cfg *config.Config) *ReportHan
 
 // HandleRequestReport handles POST /api/reports
 // Creates a new report generation job and returns 202 with job ID.
+// The backend computes periodStart (from last completed report) and periodEnd (current time).
 func (h *ReportHandler) HandleRequestReport(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserContextKey).(jwt.MapClaims)
 	sub, _ := claims["sub"].(string)
 
-	var req struct {
-		PeriodStart string `json:"periodStart"`
-		PeriodEnd   string `json:"periodEnd"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
-		return
-	}
-
-	jobID, err := h.svc.RequestReport(r.Context(), sub, req.PeriodStart, req.PeriodEnd)
+	jobID, err := h.svc.RequestReport(r.Context(), sub)
 	if err != nil {
 		log.Printf("failed to request report: %v", err)
 		http.Error(w, `{"error":"failed to create report job"}`, http.StatusInternalServerError)

@@ -28,7 +28,7 @@ func TestReportService_RequestReport_ReturnsJobID(t *testing.T) {
 	svc, _ := setupTestReportService(t)
 
 	// Without a running CouchDB, this will error — but the method signature is validated
-	jobID, err := svc.RequestReport(context.Background(), "user123", "2026-01-01", "2026-05-16")
+	jobID, err := svc.RequestReport(context.Background(), "user123")
 	if err != nil {
 		// Expected: CouchDB not available — but the method exists and returns (string, error)
 		t.Logf("RequestReport returned expected error (no CouchDB): %v", err)
@@ -82,7 +82,7 @@ func TestReportService_MutexProtectsGeneration(t *testing.T) {
 	done := make(chan bool, 3)
 	for i := 0; i < 3; i++ {
 		go func() {
-			svc.RequestReport(context.Background(), "user123", "2026-01-01", "2026-05-16")
+			svc.RequestReport(context.Background(), "user123")
 			done <- true
 		}()
 	}

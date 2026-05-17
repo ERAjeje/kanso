@@ -110,9 +110,7 @@ func TestReportHandler_RequestReport_Returns202(t *testing.T) {
 	defer cleanup()
 	router := chiRouterWithHandler(h)
 
-	body := `{"periodStart":"2026-01-01","periodEnd":"2026-05-16"}`
-	req := httptest.NewRequest("POST", "/api/reports", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
+	req := httptest.NewRequest("POST", "/api/reports", nil)
 	req = authenticatedRequest(req, "user123")
 
 	w := httptest.NewRecorder()
@@ -252,19 +250,19 @@ func TestReportHandler_Download_ReturnsPDF(t *testing.T) {
 	}
 }
 
-func TestReportHandler_RequestReport_BadRequest(t *testing.T) {
+func TestReportHandler_RequestReport_WithEmptyBody(t *testing.T) {
 	h, cleanup := setupTestReportHandlerWithMock()
 	defer cleanup()
 	router := chiRouterWithHandler(h)
 
-	req := httptest.NewRequest("POST", "/api/reports", strings.NewReader("not-json"))
+	req := httptest.NewRequest("POST", "/api/reports", strings.NewReader(""))
 	req.Header.Set("Content-Type", "application/json")
 	req = authenticatedRequest(req, "user123")
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("expected 400 for bad JSON, got %d", w.Code)
+	if w.Code != http.StatusAccepted {
+		t.Errorf("expected status 202 for empty body, got %d. Body: %s", w.Code, w.Body.String())
 	}
 }
