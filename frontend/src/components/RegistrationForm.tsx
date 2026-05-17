@@ -113,7 +113,7 @@ export function RegistrationForm({ onSaved, onShowToast }: Props) {
 
       <button
         type="submit"
-        disabled={saving || !sentimento.nome.trim()}
+        disabled={saving || !(sensacoes.trim() || contexto.trim() || pensamentos.trim())}
         className="w-full bg-indigo-600 text-white rounded-lg py-3 font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {saving ? 'Salvando...' : 'Registrar'}

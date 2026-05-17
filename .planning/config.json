@@ -10,6 +10,9 @@
     "roadmapper": "deepseek-v4-flash",
     "implementation": "deepseek-v4-flash"
   },
+  "hooks": {
+    "workflow_guard": true
+  },
   "workflow": {
     "research": true,
     "plan_check": true,
