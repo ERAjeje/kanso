@@ -34,6 +34,9 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    include: ['events'],
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test-setup.ts',
