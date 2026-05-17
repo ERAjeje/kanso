@@ -8,10 +8,10 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 | Field | Value |
 |-------|-------|
-| **Plan ID** | — |
-| **Description** | — |
-| **Requested At** | — |
-| **Requested By** | — |
+| **Plan ID** | 01 |
+| **Description** | Resolve All Tech Debt (P0 + P1 + P2) — Env vars, CORS, Vite proxy, Traefik, Makefile, nlp-service docs |
+| **Requested At** | 2026-05-17 |
+| **Requested By** | User |
 
 ---
 

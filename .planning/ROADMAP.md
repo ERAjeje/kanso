@@ -9,6 +9,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - [x] **Phase 1: Foundation & Authentication** — Infrastructure setup, Google OAuth, JWT auth, CouchDB isolation
 - [ ] **Phase 2: Core Diary — Registro & Sync** - Emotion registration form, offline-first PouchDB storage, cloud sync
 - [x] **Phase 3: Reports** - PDF report generation with async job infrastructure
+- [ ] **Phase 4: Technical Debt & Dev Experience** - Env vars, CORS, Vite proxy, Traefik, Makefile, nlp-service docs
 
 ## Phase Details
 
@@ -76,6 +77,24 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 **UI hint**: yes
 **Completed**: 2026-05-16
 
+### Phase 4: Technical Debt & Dev Experience
+**Goal**: Enable localhost development without Docker/Traefik dependency and resolve accumulated tech debt
+**Mode**: standard
+**Depends on**: Phase 1, Phase 2, Phase 3
+**Requirements**: None (tech debt resolution)
+**Success Criteria** (what must be TRUE):
+  1. Frontend uses `VITE_API_URL` and `VITE_COUCHDB_URL` env vars instead of hardcoded URLs
+  2. Backend has CORS middleware configured for `localhost:5173` and `kanso.local`
+  3. Vite dev server proxies `/api` and `/db` to backend and CouchDB
+  4. Traefik service added to docker-compose with TLS routing
+  5. Makefile provides unified commands (`up`, `down`, `dev`, `test`, `build`, `logs`)
+  6. `nlp-service/README.md` documents v2 deferred feature
+  7. All existing tests pass after changes
+**Plans**: 1 plan (single wave)
+**Waves**:
+- **Wave 1** *(Plan 01)* — All tech debt items: env vars → CORS → Vite proxy → Traefik → Makefile → nlp-service docs
+**UI hint**: no
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -83,3 +102,4 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 1. Foundation & Authentication | 3/3 | Complete | 2026-05-16 |
 | 2. Core Diary — Registro & Sync | 3/3 | Complete | 2026-05-16 |
 | 3. Reports | 2/2 | Complete | 2026-05-16 |
+| 4. Technical Debt & Dev Experience | 0/1 | Pending | — |
