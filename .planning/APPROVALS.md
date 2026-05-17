@@ -21,6 +21,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 05-01 | Histórico de Registros — lista cronológica com cards expansíveis | 2026-05-17 | 2026-05-17 |
 | fix-relatorio-contract | Remover periodStart/periodEnd do contrato — backend calcula datas internamente | 2026-05-17 | 2026-05-17 |
 | 06-01 | Push Notifications — backend + frontend (SW + settings) + scheduler + infra | 2026-05-17 | 2026-05-17 |
+| fix-push-ux | Push notification UX: toasts para feedback visual | 2026-05-17 | 2026-05-17 |
 
 ---
 
@@ -50,6 +51,8 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 2026-05-17 | fix-relatorio-contract | executed | Handler sem body parse + service computa datas + repository GetLastCompletedReport |
 | 2026-05-17 | 06-01 | approved | Push Notifications — backend + frontend + scheduler + infra |
 | 2026-05-17 | 06-01 | executed | Push Notifications — implementado + testado |
+| 2026-05-17 | fix-push-ux | approved | Push UX: toasts para feedback visual em erros silenciosos |
+| 2026-05-17 | fix-push-ux | executed | useAuth.tsx + Profile.tsx: toasts adicionados em falhas silenciosas |
 
 ---
 

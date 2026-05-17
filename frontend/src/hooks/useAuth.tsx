@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { authService, type User } from '../services/auth'
 import { registrosDB, sentimentosDB } from '../services/pouchdb'
+import { Toast } from '../components/Toast'
 
 interface AuthContextType {
   user: User | null
@@ -23,6 +24,7 @@ async function destroyPouchDB() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [toast, setToast] = useState('')
 
   useEffect(() => {
     authService.getCurrentUser().then(u => {
@@ -41,7 +43,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const reg = await navigator.serviceWorker.register('/sw.js')
         const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY
-        if (!vapidKey) return
+        if (!vapidKey) {
+          setToast('Notificações push não configuradas — chave VAPID ausente no .env')
+          return
+        }
         const perm = await Notification.requestPermission()
         if (perm === 'granted') {
           const sub = await reg.pushManager.subscribe({
@@ -58,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           })
         }
       } catch {
-        // Notification permission not granted or push unavailable
+        setToast('Não foi possível ativar notificações push')
       }
     }
   }, [])
@@ -71,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+      <Toast message={toast} visible={!!toast} onClose={() => setToast('')} />
       {children}
     </AuthContext.Provider>
   )

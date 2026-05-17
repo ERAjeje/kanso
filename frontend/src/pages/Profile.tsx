@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ReportSection } from '../components/ReportSection'
+import { Toast } from '../components/Toast'
 import { getPreferences, updatePreferences, type PushPreferences } from '../services/push'
 
 const DEFAULT_TIMES = ['12:00', '18:00', '23:00']
@@ -8,6 +9,7 @@ export function Profile() {
   const [prefs, setPrefs] = useState<PushPreferences | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState('')
 
   useEffect(() => {
     getPreferences()
@@ -23,8 +25,9 @@ export function Profile() {
     try {
       await updatePreferences(next)
       setPrefs(prev => prev ? { ...prev, enabled: next.enabled } : null)
+      setToast(next.enabled ? 'Lembretes ativados' : 'Lembretes desativados')
     } catch {
-      // revert on error
+      setToast('Erro ao salvar preferências — servidor indisponível')
     }
     setSaving(false)
   }
@@ -38,8 +41,9 @@ export function Profile() {
     try {
       await updatePreferences(next)
       setPrefs(prev => prev ? { ...prev, times } : null)
+      setToast('Horário salvo')
     } catch {
-      // revert on error
+      setToast('Erro ao salvar horário — servidor indisponível')
     }
     setSaving(false)
   }
@@ -54,6 +58,7 @@ export function Profile() {
 
   return (
     <div className="p-8 max-w-lg mx-auto space-y-8">
+      <Toast message={toast} visible={!!toast} onClose={() => setToast('')} />
       <h1 className="text-2xl font-bold text-gray-800 mb-2">Perfil</h1>
       <ReportSection />
 
