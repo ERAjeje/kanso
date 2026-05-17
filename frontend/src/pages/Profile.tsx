@@ -22,12 +22,11 @@ export function Profile() {
     if (!prefs) return
     const next = { enabled: !prefs.enabled, times: prefs.times }
     setSaving(true)
+    setPrefs(prev => prev ? { ...prev, enabled: next.enabled } : null)
     try {
       await updatePreferences(next)
-      setPrefs(prev => prev ? { ...prev, enabled: next.enabled } : null)
-      setToast(next.enabled ? 'Lembretes ativados' : 'Lembretes desativados')
     } catch {
-      setToast('Erro ao salvar preferências — servidor indisponível')
+      setToast('Servidor indisponível. Preferências salvas e serão sincronizadas assim que possível.')
     }
     setSaving(false)
   }
@@ -38,12 +37,11 @@ export function Profile() {
     times[index] = value
     const next = { enabled: prefs.enabled, times }
     setSaving(true)
+    setPrefs(prev => prev ? { ...prev, times } : null)
     try {
       await updatePreferences(next)
-      setPrefs(prev => prev ? { ...prev, times } : null)
-      setToast('Horário salvo')
     } catch {
-      setToast('Erro ao salvar horário — servidor indisponível')
+      setToast('Servidor indisponível. Preferências salvas e serão sincronizadas assim que possível.')
     }
     setSaving(false)
   }

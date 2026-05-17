@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const reg = await navigator.serviceWorker.register('/sw.js')
         const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY
         if (!vapidKey) {
-          setToast('Notificações push não configuradas — chave VAPID ausente no .env')
+          setToast('Não foi possível atualizar. Tente novamente mais tarde.')
           return
         }
         const perm = await Notification.requestPermission()
