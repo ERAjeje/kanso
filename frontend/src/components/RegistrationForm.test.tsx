@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { RegistrationForm } from './RegistrationForm'
 
 const mockSaveRegistro = vi.fn()
@@ -36,25 +36,48 @@ describe('RegistrationForm', () => {
     expect(textareas.length).toBeGreaterThanOrEqual(3)
   })
 
-  it('calls saveRegistro on submit with correct data', async () => {
+  it('submit button is disabled when all text fields are empty', () => {
+    render(<RegistrationForm onSaved={vi.fn()} onShowToast={vi.fn()} />)
+    const submitBtn = screen.getByRole('button', { name: /registrar/i })
+    expect(submitBtn).toBeDisabled()
+  })
+
+  it('submit button is enabled when at least one text field is filled (sentimento optional)', () => {
+    render(<RegistrationForm onSaved={vi.fn()} onShowToast={vi.fn()} />)
+
+    const sensacoesInput = screen.getByPlaceholderText('O que você está sentindo no corpo?')
+    fireEvent.change(sensacoesInput, { target: { value: 'Coração acelerado' } })
+
+    const submitBtn = screen.getByRole('button', { name: /registrar/i })
+    expect(submitBtn).not.toBeDisabled()
+  })
+
+  it('calls saveRegistro on submit with sentimentoNome as empty string', async () => {
     mockSaveRegistro.mockResolvedValue({
       _id: 'new-id',
       type: 'registro',
       userId: 'test',
-      dataHora: '2026-05-16T14:30:00.000Z',
-      sensacoes: '',
+      dataHora: '2026-05-17T14:30:00.000Z',
+      sensacoes: 'Coração acelerado',
       sentimentoId: null,
-      sentimentoNome: 'ansiedade',
+      sentimentoNome: '',
       contexto: '',
       pensamentos: '',
-      createdAt: '2026-05-16T14:30:00.000Z',
-      updatedAt: '2026-05-16T14:30:00.000Z',
+      createdAt: '2026-05-17T14:30:00.000Z',
+      updatedAt: '2026-05-17T14:30:00.000Z',
     })
 
     render(<RegistrationForm onSaved={vi.fn()} onShowToast={vi.fn()} />)
 
+    const sensacoesInput = screen.getByPlaceholderText('O que você está sentindo no corpo?')
+    fireEvent.change(sensacoesInput, { target: { value: 'Coração acelerado' } })
+
     const submitBtn = screen.getByRole('button', { name: /registrar/i })
-    expect(submitBtn).toBeDisabled()
+    fireEvent.click(submitBtn)
+
+    expect(mockSaveRegistro).toHaveBeenCalledWith(
+      expect.objectContaining({ sentimentoNome: '' })
+    )
   })
 
   it('has no min/max on datetime-local input (backdating per REG-02)', () => {
