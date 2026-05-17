@@ -11,7 +11,7 @@ const mockUpdatePrefs = vi.fn()
 
 vi.mock('../services/push', () => ({
   getPreferences: (...args: unknown[]) => mockGetPrefs(...args),
-  updatePreferences: (...args: unknown[]) => mockUpdatePrefs(...args),
+  savePreferences: (...args: unknown[]) => mockUpdatePrefs(...args),
 }))
 
 describe('Profile', () => {

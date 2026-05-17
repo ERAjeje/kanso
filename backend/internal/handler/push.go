@@ -19,16 +19,14 @@ func NewPushHandler(pushSvc *service.PushService) *PushHandler {
 	return &PushHandler{pushSvc: pushSvc}
 }
 
-type subscribeRequest struct {
-	FCMToken string `json:"fcmToken"`
-	Timezone string `json:"timezone"`
-}
-
 func (h *PushHandler) HandleSubscribe(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value(middleware.UserContextKey).(jwt.MapClaims)
 	sub, _ := claims["sub"].(string)
 
-	var req subscribeRequest
+	var req struct {
+		FCMToken string `json:"fcmToken"`
+		Timezone string `json:"timezone"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
 		return
@@ -44,52 +42,10 @@ func (h *PushHandler) HandleSubscribe(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
-func (h *PushHandler) HandleGetPreferences(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(middleware.UserContextKey).(jwt.MapClaims)
-	sub, _ := claims["sub"].(string)
-
-	prefs, err := h.pushSvc.GetPreferences(sub)
-	if err != nil {
-		log.Printf("failed to get preferences: %v", err)
-		http.Error(w, `{"error":"failed to get preferences"}`, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(prefs)
-}
-
-type updatePreferencesRequest struct {
-	Enabled bool     `json:"enabled"`
-	Times   []string `json:"times"`
-}
-
-func (h *PushHandler) HandleUpdatePreferences(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value(middleware.UserContextKey).(jwt.MapClaims)
-	sub, _ := claims["sub"].(string)
-
-	var req updatePreferencesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
-		return
-	}
-
-	if err := h.pushSvc.UpdatePreferences(sub, req.Enabled, req.Times); err != nil {
-		log.Printf("failed to update preferences: %v", err)
-		http.Error(w, `{"error":"failed to update preferences"}`, http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
-}
-
-type sendRequest struct {
-	UserID string `json:"userId"`
-}
-
 func (h *PushHandler) HandleSend(w http.ResponseWriter, r *http.Request) {
-	var req sendRequest
+	var req struct {
+		UserID string `json:"userId"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
 		return

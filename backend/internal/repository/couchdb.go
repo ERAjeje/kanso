@@ -86,7 +86,7 @@ func (c *CouchDB) CreateOrUpdateUser(doc *UserDoc) error {
 // --- Push Preferences Repository Methods ---
 
 func (c *CouchDB) GetPushPrefs(sub string) (*PushPrefsDoc, error) {
-	url := fmt.Sprintf("%s/usuarios/push_prefs:%s", c.baseURL, sub)
+	url := fmt.Sprintf("%s/preferencias/push_prefs:%s", c.baseURL, sub)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -122,7 +122,7 @@ func (c *CouchDB) SavePushPrefs(doc *PushPrefsDoc) error {
 		doc.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 	}
 	doc.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
-	return c.putDoc("usuarios", doc.ID, doc)
+	return c.putDoc("preferencias", doc.ID, doc)
 }
 
 func (c *CouchDB) GetAllPushPrefs() ([]PushPrefsDoc, error) {
@@ -140,7 +140,7 @@ func (c *CouchDB) GetAllPushPrefs() ([]PushPrefsDoc, error) {
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/usuarios/_find", c.baseURL)
+	url := fmt.Sprintf("%s/preferencias/_find", c.baseURL)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)

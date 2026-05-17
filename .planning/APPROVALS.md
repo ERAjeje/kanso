@@ -22,6 +22,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | fix-relatorio-contract | Remover periodStart/periodEnd do contrato — backend calcula datas internamente | 2026-05-17 | 2026-05-17 |
 | 06-01 | Push Notifications — backend + frontend (SW + settings) + scheduler + infra | 2026-05-17 | 2026-05-17 |
 | fix-push-ux | Push notification UX: toasts para feedback visual | 2026-05-17 | 2026-05-17 |
+| 06-02 | Push preferences via PouchDB sync (offline-first) | 2026-05-17 | — |
 
 ---
 

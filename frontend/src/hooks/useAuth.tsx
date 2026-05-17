@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { authService, type User } from '../services/auth'
 import { registrosDB, sentimentosDB } from '../services/pouchdb'
+import { pushSubscription } from '../services/push'
 import { Toast } from '../components/Toast'
 
 interface AuthContextType {
@@ -54,13 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             applicationServerKey: urlBase64ToUint8Array(vapidKey),
           })
           const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-          const token = authService.getStoredJWT()
           const fcmToken = JSON.stringify(sub)
-          await fetch(`${import.meta.env.VITE_API_URL || ''}/api/push/subscribe`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fcmToken, timezone }),
-          })
+          await pushSubscription({ fcmToken, timezone })
         }
       } catch {
         setToast('Não foi possível ativar notificações push')

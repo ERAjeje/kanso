@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from './useAuth'
-import { subscribe } from '../services/push'
+import { pushSubscription } from '../services/push'
 
 type Permission = NotificationPermission | 'unavailable'
 
@@ -35,8 +35,9 @@ export function usePushNotifications() {
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(vapidKey),
         })
-        const token = JSON.stringify(sub)
-        await subscribe(token)
+        const fcmToken = JSON.stringify(sub)
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        await pushSubscription({ fcmToken, timezone })
         setSubscribed(true)
       } catch (err) {
         console.error('Failed to subscribe to push:', err)

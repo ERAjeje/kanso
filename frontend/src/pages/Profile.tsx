@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
 import { ReportSection } from '../components/ReportSection'
-import { Toast } from '../components/Toast'
-import { getPreferences, updatePreferences, type PushPreferences } from '../services/push'
+import { getPreferences, savePreferences, type PushPreferences } from '../services/push'
 
 const DEFAULT_TIMES = ['12:00', '18:00', '23:00']
 
 export function Profile() {
   const [prefs, setPrefs] = useState<PushPreferences | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [toast, setToast] = useState('')
 
   useEffect(() => {
     getPreferences()
@@ -20,30 +17,18 @@ export function Profile() {
 
   const toggleEnabled = async () => {
     if (!prefs) return
-    const next = { enabled: !prefs.enabled, times: prefs.times }
-    setSaving(true)
-    setPrefs(prev => prev ? { ...prev, enabled: next.enabled } : null)
-    try {
-      await updatePreferences(next)
-    } catch {
-      setToast('Servidor indisponível. Preferências salvas e serão sincronizadas assim que possível.')
-    }
-    setSaving(false)
+    const next = { ...prefs, enabled: !prefs.enabled }
+    setPrefs(next)
+    await savePreferences(next)
   }
 
   const updateTime = async (index: number, value: string) => {
     if (!prefs) return
     const times = [...prefs.times]
     times[index] = value
-    const next = { enabled: prefs.enabled, times }
-    setSaving(true)
-    setPrefs(prev => prev ? { ...prev, times } : null)
-    try {
-      await updatePreferences(next)
-    } catch {
-      setToast('Servidor indisponível. Preferências salvas e serão sincronizadas assim que possível.')
-    }
-    setSaving(false)
+    const next = { ...prefs, times }
+    setPrefs(next)
+    await savePreferences(next)
   }
 
   const permissionStatus = 'Notification' in window
@@ -56,7 +41,6 @@ export function Profile() {
 
   return (
     <div className="p-8 max-w-lg mx-auto space-y-8">
-      <Toast message={toast} visible={!!toast} onClose={() => setToast('')} />
       <h1 className="text-2xl font-bold text-gray-800 mb-2">Perfil</h1>
       <ReportSection />
 
@@ -71,7 +55,6 @@ export function Profile() {
             ) : (
               <button
                 onClick={toggleEnabled}
-                disabled={saving}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   prefs?.enabled ? 'bg-indigo-600' : 'bg-gray-200'
                 }`}
@@ -101,7 +84,6 @@ export function Profile() {
                     type="time"
                     value={time}
                     onChange={e => updateTime(index, e.target.value)}
-                    disabled={saving}
                     className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>

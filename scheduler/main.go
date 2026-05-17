@@ -75,7 +75,7 @@ func getPushPrefs(cfg config) ([]pushPrefsDoc, error) {
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/usuarios/_find", cfg.couchDBURL)
+	url := fmt.Sprintf("%s/preferencias/_find", cfg.couchDBURL)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
