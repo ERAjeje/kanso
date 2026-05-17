@@ -14,7 +14,7 @@ function notifySyncState(state: SyncState): void {
   syncListeners.forEach(fn => fn(state))
 }
 
-const COUCHDB_URL = 'https://kanso.local/db'
+const COUCHDB_URL = import.meta.env.VITE_COUCHDB_URL
 
 function createSyncedDB(dbName: string): { local: PouchDB.Database; remote: PouchDB.Database } {
   const local = new PouchDB(`kanso_${dbName}`)

@@ -39,11 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = useCallback(async () => {
-    await fetch('https://kanso.local/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include',
-    })
-    authService.clearJWT()
+    await authService.logout()
     await destroyPouchDB()
     setUser(null)
   }, [])

@@ -24,7 +24,7 @@ describe('reports API service', () => {
       const result = await createReport()
 
       expect(mockAuthenticatedFetch).toHaveBeenCalledWith(
-        'https://kanso.local/api/reports',
+        '/api/reports',
         { method: 'POST' }
       )
       expect(result).toEqual(mockJob)
@@ -48,7 +48,7 @@ describe('reports API service', () => {
       const result = await getReportStatus('abc-123')
 
       expect(mockAuthenticatedFetch).toHaveBeenCalledWith(
-        'https://kanso.local/api/reports/abc-123'
+        '/api/reports/abc-123'
       )
       expect(result).toEqual(mockJob)
     })
@@ -62,7 +62,7 @@ describe('reports API service', () => {
       await getReportStatus('special/id+?')
 
       expect(mockAuthenticatedFetch).toHaveBeenCalledWith(
-        'https://kanso.local/api/reports/special%2Fid%2B%3F'
+        '/api/reports/special%2Fid%2B%3F'
       )
     })
 
@@ -84,7 +84,7 @@ describe('reports API service', () => {
       const result = await getReportsList()
 
       expect(mockAuthenticatedFetch).toHaveBeenCalledWith(
-        'https://kanso.local/api/reports'
+        '/api/reports'
       )
       expect(result).toEqual(mockList)
     })
@@ -99,12 +99,12 @@ describe('reports API service', () => {
   describe('getDownloadUrl', () => {
     it('returns the correct download URL for a given ID', () => {
       const url = getDownloadUrl('abc-123')
-      expect(url).toBe('https://kanso.local/api/reports/abc-123/download')
+      expect(url).toBe('/api/reports/abc-123/download')
     })
 
     it('encodes special characters in the ID', () => {
       const url = getDownloadUrl('id/with+slashes')
-      expect(url).toBe('https://kanso.local/api/reports/id%2Fwith%2Bslashes/download')
+      expect(url).toBe('/api/reports/id%2Fwith%2Bslashes/download')
     })
   })
 })
