@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-05-17)
 
 ## Current Position
 
-Phase: 5 — Histórico de Registros (completo)
-Branch: feat/05-historico-registros
-Status: Phase 5 ✅ | Sentimento opcional ✅ | Relatório contract fix ✅
-Last activity: 2026-05-17 — All fixes committed
+Phase: 6 — Push Notifications (executado)
+Branch: feat/06-push-notifications
+Status: Phase 5 ✅ | Phase 6 ✅
+Last activity: 2026-05-17 — Phase 6 executed (backend + SW + settings UI + scheduler)
 
-Progress: [████████████] 05-01 — Serviço + RegistroCard + History page + testes
+Progress: [████████████████████] 05-01 ✅ | 06-01 ✅
 
 ## Active Plans
 
@@ -23,17 +23,18 @@ Progress: [████████████] 05-01 — Serviço + RegistroCa
 | 05-01 | Histórico de Registros — lista cronológica + cards expansíveis | `registros.ts`, `History.tsx`, `RegistroCard.tsx` + tests | ✅ Executed |
 | bug-sentimento-opcional | Sentimento deixou de ser obrigatório no formulário | `RegistrationForm.tsx`, `RegistrationForm.test.tsx` | ✅ Fixed |
 | fix-relatorio-contract | Remover periodStart/periodEnd do contrato — backend calcula datas | `report.go` (handler + service), `couchdb.go` | ✅ Executed |
+| **06-01** | **Push Notifications — infra completa (backend + SW + scheduler + UI)** | **9 tasks (ver PLAN.md)** | **✅ Executed** |
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 9
 - Bug fixes: 5 (3 v1 + 2 v2: sentimento opcional + relatório contract)
-- Last activity: 2026-05-17 — Fix relatório contract (handler/service/repository)
+- Last activity: 2026-05-17 — Phase 6 planejada
 
 **Trend:**
 - v1 MVP: ✅ All phases complete
-- v2: Phase 5 — Histórico de Registros concluído ✅
+- v2: Phase 5 ✅ → Phase 6 ✅ (Push Notifications)
 
 ## Decisions
 
@@ -46,6 +47,6 @@ Progress: [████████████] 05-01 — Serviço + RegistroCa
 
 ## Session Continuity
 
-Last session: 2026-05-17 — Phase 5 + 2 bug fixes committed
-Branch: feat/05-historico-registros
-Resume with: Definir próxima feature v2 (push notifications, WhatsApp, NLP)
+Last session: 2026-05-17 — Phase 6 executed
+Branch: feat/06-push-notifications
+Resume with: Próximas features v2 (WhatsApp, NLP, ou ajustes pós-push)

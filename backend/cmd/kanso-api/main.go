@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"net/http"
 	"time"
@@ -17,6 +18,25 @@ import (
 	"github.com/edson/kanso-api/internal/service"
 )
 
+func ensureCouchDBDatabases(cfg *config.Config) error {
+	dbs := []string{"registros", "sentimentos", "preferencias"}
+	for _, db := range dbs {
+		url := cfg.CouchDBURL + "/" + db
+		req, _ := http.NewRequest("PUT", url, bytes.NewReader([]byte{}))
+		req.SetBasicAuth(cfg.CouchDBUser, cfg.CouchDBPass)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Printf("warning: could not create database %s: %v", db, err)
+			continue
+		}
+		resp.Body.Close()
+		if resp.StatusCode == http.StatusCreated {
+			log.Printf("database %s created", db)
+		}
+	}
+	return nil
+}
+
 func main() {
 	cfg := config.Load()
 
@@ -27,6 +47,10 @@ func main() {
 	pdfGen := pdf.NewGenerator("", 30*time.Second)
 	reportSvc := service.NewReportService(couchRepo, pdfGen, cfg)
 	reportHandler := handler.NewReportHandler(reportSvc, cfg)
+	pushSvc := service.NewPushService(couchRepo, cfg.FCMServerKey)
+	pushHandler := handler.NewPushHandler(pushSvc)
+
+	ensureCouchDBDatabases(cfg)
 
 	r := chi.NewRouter()
 	r.Use(chimiddleware.Logger)
@@ -53,7 +77,11 @@ func main() {
 		r.Get("/api/reports", reportHandler.HandleListReports)
 		r.Get("/api/reports/{id}", reportHandler.HandleGetReport)
 		r.Get("/api/reports/{id}/download", reportHandler.HandleDownload)
+		r.Post("/api/push/subscribe", pushHandler.HandleSubscribe)
 	})
+
+	// Internal routes (scheduler access only — on Docker internal network)
+	r.Post("/api/push/send", pushHandler.HandleSend)
 
 	log.Printf("Starting server on :%s", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))

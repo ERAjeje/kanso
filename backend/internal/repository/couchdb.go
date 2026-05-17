@@ -26,6 +26,19 @@ type UserDoc struct {
 	UpdatedAt string `json:"updatedAt,omitempty"`
 }
 
+type PushPrefsDoc struct {
+	ID        string   `json:"_id,omitempty"`
+	Rev       string   `json:"_rev,omitempty"`
+	Type      string   `json:"type"`
+	UserSub   string   `json:"userSub"`
+	Enabled   bool     `json:"enabled"`
+	Times     []string `json:"times"`
+	Timezone  string   `json:"timezone"`
+	FCMToken  string   `json:"fcmToken"`
+	CreatedAt string   `json:"createdAt,omitempty"`
+	UpdatedAt string   `json:"updatedAt,omitempty"`
+}
+
 func NewCouchDB(baseURL, adminUser, adminPass string) *CouchDB {
 	return &CouchDB{
 		baseURL:    baseURL,
@@ -68,6 +81,97 @@ func (c *CouchDB) CreateOrUpdateUser(doc *UserDoc) error {
 		return fmt.Errorf("couchdb put status: %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// --- Push Preferences Repository Methods ---
+
+func (c *CouchDB) GetPushPrefs(sub string) (*PushPrefsDoc, error) {
+	url := fmt.Sprintf("%s/preferencias/push_prefs:%s", c.baseURL, sub)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("get: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("get status: %d", resp.StatusCode)
+	}
+
+	var doc PushPrefsDoc
+	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+	return &doc, nil
+}
+
+func (c *CouchDB) SavePushPrefs(doc *PushPrefsDoc) error {
+	doc.Type = "push_prefs"
+	if doc.ID == "" {
+		doc.ID = "push_prefs:" + doc.UserSub
+	}
+	if doc.CreatedAt == "" {
+		doc.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+	}
+	doc.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	return c.putDoc("preferencias", doc.ID, doc)
+}
+
+func (c *CouchDB) GetAllPushPrefs() ([]PushPrefsDoc, error) {
+	selector := map[string]interface{}{
+		"type":    "push_prefs",
+		"enabled": true,
+	}
+	query := mangoQuery{
+		Selector: selector,
+		Limit:    1000,
+	}
+
+	body, err := json.Marshal(query)
+	if err != nil {
+		return nil, fmt.Errorf("marshal query: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/preferencias/_find", c.baseURL)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("find: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("find status: %d", resp.StatusCode)
+	}
+
+	var mResp mangoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&mResp); err != nil {
+		return nil, fmt.Errorf("decode response: %w", err)
+	}
+
+	prefs := make([]PushPrefsDoc, 0, len(mResp.Docs))
+	for _, raw := range mResp.Docs {
+		var p PushPrefsDoc
+		if err := json.Unmarshal(raw, &p); err != nil {
+			return nil, fmt.Errorf("unmarshal: %w", err)
+		}
+		prefs = append(prefs, p)
+	}
+	return prefs, nil
 }
 
 type ReportJobStatus string

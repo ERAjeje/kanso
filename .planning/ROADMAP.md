@@ -122,3 +122,23 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 3. Reports | 2/2 | Complete | 2026-05-16 |
 | 4. Technical Debt & Dev Experience | 1/1 | Complete | 2026-05-17 |
 | 5. Histórico de Registros | 1/1 | Complete | 2026-05-17 |
+| 6. Push Notifications | 1/1 | Complete | 2026-05-17 |
+
+## Phase 6: Push Notifications
+
+**Goal**: Users receive push notification reminders at configurable times (default 12, 18, 23h) to record their emotions
+**Mode**: mvp
+**Depends on**: Phase 1 (auth), Phase 2 (registro)
+**Requirements**: NOTF-01, NOTF-02, NOTF-03
+**Success Criteria** (what must be TRUE):
+  1. User receives push notifications on their device at configured times
+  2. User can customize reminder times (defaults 12, 18, 23h) and toggle on/off
+  3. User's timezone is detected from browser and stored in CouchDB
+  4. Notification permission is requested on first login
+  5. Tapping a notification opens the registration screen with current date/time
+  6. FCM push subscription token is stored in CouchDB and used by scheduler service
+  7. A separate Go microservice (`kanso-scheduler`) checks preferences and triggers notifications
+**Plans**: 1 plan (single wave)
+**Waves**:
+- **Wave 1** *(Plan 01)* — All tasks: backend push endpoints + FCM service, service worker + permission hook + settings UI, scheduler microservice, tests, infra
+**UI hint**: yes
