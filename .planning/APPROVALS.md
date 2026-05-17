@@ -56,6 +56,8 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 2026-05-17 | fix-push-ux | executed | useAuth.tsx + Profile.tsx: toasts adicionados em falhas silenciosas |
 | 2026-05-17 | 06-02 | approved | Push preferences via PouchDB sync |
 | 2026-05-17 | 06-02 | executed | PouchDB preferenciasDB + push.ts rewrite + backend atualizado |
+| 2026-05-17 | fix-scheduler-go-sum | approved | Scheduler build quebra por go.sum ausente |
+| 2026-05-17 | fix-scheduler-go-sum | executed | Dockerfile: COPY go.* ./ em vez de go.mod go.sum |
 
 ---
 
