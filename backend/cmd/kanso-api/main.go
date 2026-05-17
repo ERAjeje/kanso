@@ -27,6 +27,8 @@ func main() {
 	pdfGen := pdf.NewGenerator("", 30*time.Second)
 	reportSvc := service.NewReportService(couchRepo, pdfGen, cfg)
 	reportHandler := handler.NewReportHandler(reportSvc, cfg)
+	pushSvc := service.NewPushService(couchRepo, cfg.FCMServerKey)
+	pushHandler := handler.NewPushHandler(pushSvc)
 
 	r := chi.NewRouter()
 	r.Use(chimiddleware.Logger)
@@ -53,7 +55,13 @@ func main() {
 		r.Get("/api/reports", reportHandler.HandleListReports)
 		r.Get("/api/reports/{id}", reportHandler.HandleGetReport)
 		r.Get("/api/reports/{id}/download", reportHandler.HandleDownload)
+		r.Post("/api/push/subscribe", pushHandler.HandleSubscribe)
+		r.Get("/api/push/preferences", pushHandler.HandleGetPreferences)
+		r.Put("/api/push/preferences", pushHandler.HandleUpdatePreferences)
 	})
+
+	// Internal routes (scheduler access only — on Docker internal network)
+	r.Post("/api/push/send", pushHandler.HandleSend)
 
 	log.Printf("Starting server on :%s", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))

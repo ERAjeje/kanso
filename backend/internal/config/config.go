@@ -10,6 +10,7 @@ type Config struct {
 	JWTSecret     string
 	GoogleClienID string
 	PDFTmpDir     string
+	FCMServerKey  string
 }
 
 func Load() *Config {
@@ -21,6 +22,7 @@ func Load() *Config {
 		JWTSecret:     getEnv("JWT_SECRET", ""),
 		GoogleClienID: getEnv("GOOGLE_CLIENT_ID", ""),
 		PDFTmpDir:     getEnv("PDF_TMP_DIR", "/tmp/kanso-pdf"),
+		FCMServerKey:  getEnv("FCM_SERVER_KEY", ""),
 	}
 }
 
