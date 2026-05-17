@@ -15,6 +15,11 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | Plan ID | Description | Approved At | Executed | 
 |---------|-------------|-------------|----------|
 | 04-01 | Resolve All Tech Debt (P0 + P1 + P2) | 2026-05-17 | 2026-05-17 |
+| fix-01 | Fix Google Sign-In button not rendering (GIS script missing in index.html) | 2026-05-17 | 2026-05-17 |
+| fix-02 | Fix Docker env vars: GOOGLE_CLIENT_ID não chegava ao container | 2026-05-17 | 2026-05-17 |
+| fix-03 | Fix TabBar routing — layout aninhado pós-login | 2026-05-17 | 2026-05-17 |
+| 05-01 | Histórico de Registros — lista cronológica com cards expansíveis | 2026-05-17 | 2026-05-17 |
+| fix-relatorio-contract | Remover periodStart/periodEnd do contrato — backend calcula datas internamente | 2026-05-17 | 2026-05-17 |
 
 ---
 
@@ -32,6 +37,16 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 |------|------|--------|--------|
 | 2026-05-17 | 04-01 | approved | Tech Debt resolution |
 | 2026-05-17 | 04-01 | executed | Tech Debt resolution |
+| 2026-05-17 | fix-01 | approved | Login Google Sign-In fix |
+| 2026-05-17 | fix-01 | executed | Login Google Sign-In fix (script GIS + fallback button + testes) |
+| 2026-05-17 | fix-02 | approved | Docker: GOOGLE_CLIENT_ID não passava ao container por precedência de env vars |
+| 2026-05-17 | fix-02 | executed | Docker: removido env vars do environment bloco → env_file, corrigido entrypoint do Dockerfile |
+| 2026-05-17 | fix-03 | approved | TabBar routing — layout aninhado |
+| 2026-05-17 | fix-03 | executed | TabBar routing — App.tsx reestruturado com layout aninhado, rotas /register, /history, /profile dentro de TabBar |
+| 2026-05-17 | 05-01 | approved | Histórico de Registros — lista cronológica com cards expansíveis |
+| 2026-05-17 | 05-01 | executed | Histórico de Registros — implementado + testado |
+| 2026-05-17 | fix-relatorio-contract | approved | Remover periodStart/periodEnd do contrato — backend calcula datas internamente |
+| 2026-05-17 | fix-relatorio-contract | executed | Handler sem body parse + service computa datas + repository GetLastCompletedReport |
 
 ---
 

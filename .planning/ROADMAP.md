@@ -95,6 +95,24 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - **Wave 1** *(Plan 01)* — All tech debt items: env vars → CORS → Vite proxy → Traefik → Makefile → nlp-service docs
 **UI hint**: no
 
+### Phase 5: Histórico de Registros
+**Goal**: Users can browse their emotional history chronologically, with inline detail expansion
+**Mode**: mvp
+**Depends on**: Phase 2
+**Requirements**: REG-01, REG-03
+**Success Criteria** (what must be TRUE):
+  1. History page shows registrations in reverse chronological order
+  2. Each card displays sentimentoNome (or friendly placeholder "Buscando sentimento"), date/time, and a content preview
+  3. Tapping a card expands it inline to show all fields — sensações, sentimento, contexto, pensamentos
+  4. Friendly fallback text when sentimentoNome is null: "Buscando sentimento"
+  5. Loading, empty, and error states are handled gracefully
+  6. All new code has passing tests
+**Plans**: 1 plan (single wave)
+**Waves**:
+- **Wave 1** *(Plan 01)* — Service method + RegistroCard component + History page + tests
+**UI hint**: yes
+**Completed**: 2026-05-17
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -103,3 +121,4 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 2. Core Diary — Registro & Sync | 3/3 | Complete | 2026-05-16 |
 | 3. Reports | 2/2 | Complete | 2026-05-16 |
 | 4. Technical Debt & Dev Experience | 1/1 | Complete | 2026-05-17 |
+| 5. Histórico de Registros | 1/1 | Complete | 2026-05-17 |
