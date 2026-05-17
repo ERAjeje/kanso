@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Kanso é um aplicativo mobile (PWA) de diário emocional offline-first para auxiliar o processo terapêutico. O usuário registra sensações, sentimentos, contexto e pensamentos no momento em que são percebidos — com suporte a registro retroativo via notificações push — e pode gerar relatórios periódicos que são enviados via WhatsApp para a psicóloga. O app usa análise de NLP para extrair padrões emocionais dos registros ao longo do tempo.
+Kanso é um aplicativo mobile (PWA) de diário emocional offline-first para auxiliar o processo terapêutico. O usuário registra sensações, sentimentos, contexto e pensamentos — com histórico cronológico — e pode gerar relatórios periódicos em PDF. Funcionalidades avançadas (NLP, push notifications, WhatsApp) estão planejadas para versões futuras.
 
 ## Core Value
 
@@ -10,21 +10,20 @@ O usuário consegue nomear e registrar suas emoções no momento em que as sente
 
 ## Requirements
 
-### Validated
+### Validated (v1 MVP — 2026-05-17)
 
-(None yet — ship to validate)
+- [x] **Registro de sensação** — Phase 2
+- [x] **Sincronização offline-first** — Phase 2
+- [x] **Autenticação via Google** — Phase 1
+- [x] **Navegação por abas** — Phase 1
+- [x] **Geração de relatório PDF** — Phase 3
+- [x] **Histórico de registros** — Phase 5
 
-### Active
+### Active (v2)
 
-- [ ] **Registro de sensação**: Usuário pode registrar data/hora (com suporte retroativo), sensações (texto livre), sentimento (combobox customizável), contexto (texto livre) e pensamentos (texto livre)
-- [ ] **Sincronização offline-first**: Dados locais (PouchDB) sincronizam com servidor (CouchDB) automaticamente quando online
-- [ ] **Autenticação via Google**: Login com Google OAuth, JWT próprio para autorização
-- [ ] **Navegação por abas**: Três abas — Registrar (padrão), Histórico, Perfil/Config
 - [ ] **Notificações push**: Lembretes em horários customizáveis (padrão 12, 18, 23h) para registrar
-- [ ] **Geração de relatório PDF**: Usuário gera relatório manualmente cobrindo período desde o último relatório até a data atual
 - [ ] **Envio via WhatsApp**: Relatório PDF enviado automaticamente para a psicóloga via Twilio
 - [ ] **Análise NLP**: Backend analisa registros com modelo de emoções em português e enriquece o registro com emoções detectadas
-- [ ] **Histórico de registros**: Visualização cronológica dos registros salvos
 
 ### Out of Scope
 
@@ -53,11 +52,13 @@ MVP incremental planejado: registro manual + sincronização → relatórios →
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Google Sign-In desde v1 | Preparar para escalabilidade e portfólio público | — Pending |
-| PWA em vez de app nativo | Suficiente para uso inicial, sem barreira de loja | — Pending |
-| Offline-first com PouchDB/CouchDB | App móvel pode ficar sem conexão; sincronização nativa incremental | — Pending |
-| Sentimento como combobox customizável | Permite descobrir e nomear sentimentos durante a terapia | — Pending |
-| Relatório manual (não automático) | Usuário controla quando compartilhar com a psicóloga | — Pending |
+| Google Sign-In desde v1 | Preparar para escalabilidade e portfólio público | Implementado (Phase 1) |
+| PWA em vez de app nativo | Suficiente para uso inicial, sem barreira de loja | Mantido para v1 |
+| Offline-first com PouchDB/CouchDB | App móvel pode ficar sem conexão; sincronização nativa incremental | Implementado (Phase 2) |
+| Sentimento como combobox customizável | Permite descobrir e nomear sentimentos durante a terapia | Implementado + opcional (Phase 5) |
+| Relatório manual (não automático) | Usuário controla quando compartilhar com a psicóloga | Implementado (Phase 3) |
+| Sentimento não obrigatório | Processo terapêutico — nomear o sentimento é parte da descoberta | Implementado (2026-05-17) |
+| Relatório sem body no contrato | Backend computa período automaticamente | Implementado (2026-05-17) |
 
 ## Evolution
 
@@ -77,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-16 after initialization*
+*Last updated: 2026-05-17 — v1 MVP complete, Phase 5 delivered*

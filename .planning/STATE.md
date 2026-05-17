@@ -2,17 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-16)
+See: .planning/PROJECT.md (updated 2026-05-17)
 
 **Core value:** O usuário consegue nomear e registrar suas emoções no momento em que as sente, criando um histórico que torna o processo terapêutico mais concreto e orientado a dados.
-**Current focus:** Bug fixes — relatório contract corrigido
+**Current focus:** v2 features — próximos passos
 
 ## Current Position
 
 Phase: 5 — Histórico de Registros (completo)
-Branch: main
-Status: Plan 05-01 executado ✅ | Sentimento field: não obrigatório ✅
-Last activity: 2026-05-17 — Phase 5 + bug fix sentimento
+Branch: feat/05-historico-registros
+Status: Phase 5 ✅ | Sentimento opcional ✅ | Relatório contract fix ✅
+Last activity: 2026-05-17 — All fixes committed
 
 Progress: [████████████] 05-01 — Serviço + RegistroCard + History page + testes
 
@@ -46,6 +46,6 @@ Progress: [████████████] 05-01 — Serviço + RegistroCa
 
 ## Session Continuity
 
-Last session: 2026-05-17 — Phase 5 executado
-Branch: main
+Last session: 2026-05-17 — Phase 5 + 2 bug fixes committed
+Branch: feat/05-historico-registros
 Resume with: Definir próxima feature v2 (push notifications, WhatsApp, NLP)
