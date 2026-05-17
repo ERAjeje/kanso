@@ -30,6 +30,14 @@ export async function saveSentimento(nome: string): Promise<SentimentoDoc> {
   return doc
 }
 
+export async function getRegistros(): Promise<RegistroDoc[]> {
+  const result = await registrosDB.allDocs<RegistroDoc>({ include_docs: true })
+  return result.rows
+    .map((row: PouchDB.Core.Row<RegistroDoc>) => row.doc!)
+    .filter((doc: RegistroDoc) => doc.type === 'registro')
+    .sort((a: RegistroDoc, b: RegistroDoc) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
+}
+
 export async function getSentimentos(): Promise<SentimentoDoc[]> {
   const result = await sentimentosDB.allDocs<SentimentoDoc>({ include_docs: true })
   return result.rows

@@ -1,0 +1,80 @@
+import { describe, it, expect } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { RegistroCard } from './RegistroCard'
+import type { RegistroDoc } from '../types'
+
+function makeRegistro(overrides: Partial<RegistroDoc> = {}): RegistroDoc {
+  return {
+    _id: '1',
+    _rev: '1-abc',
+    type: 'registro',
+    userId: 'u1',
+    dataHora: '2026-05-17T14:30:00.000Z',
+    sensacoes: 'Coração acelerado, mãos frias',
+    sentimentoId: null,
+    sentimentoNome: 'ansiedade',
+    contexto: 'Reunião com o chefe',
+    pensamentos: 'Será que fiz o suficiente?',
+    createdAt: '2026-05-17T14:30:00.000Z',
+    updatedAt: '2026-05-17T14:30:00.000Z',
+    ...overrides,
+  }
+}
+
+describe('RegistroCard', () => {
+  it('renders sentimentoNome when present', () => {
+    render(<RegistroCard registro={makeRegistro()} />)
+    expect(screen.getByText('ansiedade')).toBeDefined()
+  })
+
+  it('renders fallback text when sentimentoNome is empty string', () => {
+    render(<RegistroCard registro={makeRegistro({ sentimentoNome: '' })} />)
+    expect(screen.getByText('Buscando sentimento')).toBeDefined()
+  })
+
+  it('renders fallback text when sentimentoNome is whitespace only', () => {
+    render(<RegistroCard registro={makeRegistro({ sentimentoNome: '   ' })} />)
+    expect(screen.getByText('Buscando sentimento')).toBeDefined()
+  })
+
+  it('shows date/time formatted in pt-BR', () => {
+    render(<RegistroCard registro={makeRegistro({ dataHora: '2026-05-17T14:30:00.000Z' })} />)
+    expect(screen.getByText(/17 de maio/i)).toBeDefined()
+    expect(screen.getByText(/2026/i)).toBeDefined()
+    expect(screen.getByText(/às/i)).toBeDefined()
+  })
+
+  it('shows content preview when collapsed', () => {
+    render(<RegistroCard registro={makeRegistro()} />)
+    const preview = screen.getByText(/Coração acelerado/)
+    expect(preview).toBeDefined()
+  })
+
+  it('expands inline on click to show all fields', () => {
+    render(<RegistroCard registro={makeRegistro()} />)
+    fireEvent.click(screen.getByRole('button'))
+
+    expect(screen.getByText('Sensações')).toBeDefined()
+    expect(screen.getByText('Sentimento')).toBeDefined()
+    expect(screen.getByText('Contexto')).toBeDefined()
+    expect(screen.getByText('Pensamentos')).toBeDefined()
+  })
+
+  it('collapses on second click', () => {
+    render(<RegistroCard registro={makeRegistro()} />)
+    const card = screen.getByRole('button')
+
+    fireEvent.click(card)
+    expect(screen.getByText('Sensações')).toBeDefined()
+
+    fireEvent.click(card)
+    expect(screen.queryByText('Sensações')).toBeNull()
+  })
+
+  it('shows expanded fallback text when sentimentoNome is empty', () => {
+    render(<RegistroCard registro={makeRegistro({ sentimentoNome: '' })} />)
+    fireEvent.click(screen.getByRole('button'))
+    const labels = screen.getAllByText('Buscando sentimento')
+    expect(labels.length).toBeGreaterThanOrEqual(1)
+  })
+})
