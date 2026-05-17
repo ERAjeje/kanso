@@ -5,9 +5,9 @@
   "commit_docs": true,
   "model_profile": "custom",
   "models": {
-    "researcher": "qwen3.6-plus",
-    "synthesizer": "qwen3.6-plus",
-    "roadmapper": "qwen3.6-plus",
+    "researcher": "deepseek-v4-flash",
+    "synthesizer": "deepseek-v4-flash",
+    "roadmapper": "deepseek-v4-flash",
     "implementation": "deepseek-v4-flash"
   },
   "workflow": {
