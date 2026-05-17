@@ -20,10 +20,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /kanso-api /usr/local/bin/kanso-api
 
+# Wrapper script: run Go API in background, then headless-shell in foreground
+RUN printf '#!/bin/sh\n\
+/usr/local/bin/kanso-api &\n\
+exec /headless-shell/run.sh "$@"\n' > /entrypoint.sh && chmod +x /entrypoint.sh
+
 ENV CHROMEDP_PATH=/headless-shell/headless-shell
 
 EXPOSE 8080
-CMD ["kanso-api"]
+ENTRYPOINT ["/entrypoint.sh"]
 
 # ============================================================
 # Stage 3: Development with hot-reload (air)
