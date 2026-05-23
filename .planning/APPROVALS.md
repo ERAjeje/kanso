@@ -13,7 +13,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 ## Approved Plans
 
 | Plan ID | Description | Approved At | Executed | 
-|---------|-------------|-------------|----------|
+| 07-01 | Infra NLP — Python FastAPI/gRPC scaffold, Docker, model download | 2026-05-23 | 2026-05-23 |
 | 04-01 | Resolve All Tech Debt (P0 + P1 + P2) | 2026-05-17 | 2026-05-17 |
 | fix-01 | Fix Google Sign-In button not rendering (GIS script missing in index.html) | 2026-05-17 | 2026-05-17 |
 | fix-02 | Fix Docker env vars: GOOGLE_CLIENT_ID não chegava ao container | 2026-05-17 | 2026-05-17 |
@@ -37,7 +37,8 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 ## Log
 
 | Date | Plan | Action | Detail |
-|------|------|--------|--------|
+| 2026-05-23 | 07-01 | approved | Infra NLP — Python FastAPI/gRPC scaffold, Docker, model download |
+| 2026-05-23 | 07-01 | executed | Infra NLP — 6 tasks: proto, FastAPI+gRPC, Docker, docker-compose, Go client, docs |
 | 2026-05-17 | 04-01 | approved | Tech Debt resolution |
 | 2026-05-17 | 04-01 | executed | Tech Debt resolution |
 | 2026-05-17 | fix-01 | approved | Login Google Sign-In fix |
@@ -65,4 +66,4 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 | Timestamp | Reason | State File |
 |-----------|--------|------------|
-| — | — | — |
+| 2026-05-23 | session_reset | Auto-saved state before /new. Session handoff. NLP context gathered. |
