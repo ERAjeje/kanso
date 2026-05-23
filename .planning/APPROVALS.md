@@ -14,6 +14,9 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 | Plan ID | Description | Approved At | Executed | 
 | 07-01 | Infra NLP — Python FastAPI/gRPC scaffold, Docker, model download | 2026-05-23 | 2026-05-23 |
+| 07-02-01 | Data pipeline — mappings, curated phrases, config | 2026-05-23 | — |
+| 07-02-02 | Training — back-translation + BERTimbau fine-tuning | 2026-05-23 | — |
+| 07-02-03 | Inference — classifier, server, validation, Docker | 2026-05-23 | — |
 | 04-01 | Resolve All Tech Debt (P0 + P1 + P2) | 2026-05-17 | 2026-05-17 |
 | fix-01 | Fix Google Sign-In button not rendering (GIS script missing in index.html) | 2026-05-17 | 2026-05-17 |
 | fix-02 | Fix Docker env vars: GOOGLE_CLIENT_ID não chegava ao container | 2026-05-17 | 2026-05-17 |
@@ -39,6 +42,9 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | Date | Plan | Action | Detail |
 | 2026-05-23 | 07-01 | approved | Infra NLP — Python FastAPI/gRPC scaffold, Docker, model download |
 | 2026-05-23 | 07-01 | executed | Infra NLP — 6 tasks: proto, FastAPI+gRPC, Docker, docker-compose, Go client, docs |
+| 2026-05-23 | 07-02-01 | approved | Data pipeline — mappings, curated phrases, config |
+| 2026-05-23 | 07-02-02 | approved | Training — back-translation + BERTimbau fine-tuning |
+| 2026-05-23 | 07-02-03 | approved | Inference — classifier, server, validation, Docker |
 | 2026-05-17 | 04-01 | approved | Tech Debt resolution |
 | 2026-05-17 | 04-01 | executed | Tech Debt resolution |
 | 2026-05-17 | fix-01 | approved | Login Google Sign-In fix |
