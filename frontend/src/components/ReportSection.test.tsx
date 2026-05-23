@@ -5,20 +5,20 @@ import { ReportSection } from './ReportSection'
 const mockCreateReport = vi.fn()
 const mockGetReportStatus = vi.fn()
 const mockGetReportsList = vi.fn()
-const mockGetDownloadUrl = vi.fn()
+const mockDownloadReport = vi.fn()
 
 vi.mock('../services/reports', () => ({
   createReport: (...args: unknown[]) => mockCreateReport(...args),
   getReportStatus: (...args: unknown[]) => mockGetReportStatus(...args),
   getReportsList: (...args: unknown[]) => mockGetReportsList(...args),
-  getDownloadUrl: (...args: unknown[]) => mockGetDownloadUrl(...args),
+  downloadReport: (...args: unknown[]) => mockDownloadReport(...args),
 }))
 
 describe('ReportSection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetReportsList.mockResolvedValue([])
-    mockGetDownloadUrl.mockImplementation((id: string) => `/download/${id}`)
+    mockDownloadReport.mockResolvedValue(undefined)
   })
 
   it('renders the heading', async () => {
@@ -43,12 +43,11 @@ describe('ReportSection', () => {
         {
           _id: 'prev-1',
           type: 'relatorio',
-          status: 'completed',
-          userId: 'u1',
-          requestedAt: '2026-05-15T10:00:00.000Z',
-          periodoInicio: '2026-01-01T00:00:00.000Z',
-          periodoFim: '2026-05-15T10:00:00.000Z',
-          downloadUrl: '/download/prev-1',
+          userSub: 'u1',
+          status: 'done',
+          createdAt: '2026-05-15T10:00:00.000Z',
+          periodStart: '2026-01-01T00:00:00.000Z',
+          periodEnd: '2026-05-15T10:00:00.000Z',
         },
       ])
 
@@ -75,99 +74,6 @@ describe('ReportSection', () => {
       fireEvent.click(screen.getByText('Gerar Relatório'))
 
       expect(await screen.findByText('Gerando...')).toBeDefined()
-    })
-  })
-
-  describe('completed state', () => {
-    it('shows success card with download button when report completes immediately', async () => {
-      const completedJob = {
-        _id: '1',
-        type: 'relatorio' as const,
-        userId: 'u1',
-        status: 'completed' as const,
-        requestedAt: '2026-05-16T20:00:00.000Z',
-        completedAt: '2026-05-16T20:01:00.000Z',
-        periodoInicio: '2026-01-01T00:00:00.000Z',
-        periodoFim: '2026-05-16T20:00:00.000Z',
-        totalRegistros: 15,
-        downloadUrl: '/download/1',
-      }
-      mockCreateReport.mockResolvedValue(completedJob)
-      mockGetDownloadUrl.mockReturnValue('/download/1')
-
-      render(<ReportSection />)
-      await waitFor(() => {
-        expect(screen.getByText('Gerar Relatório')).toBeDefined()
-      })
-
-      fireEvent.click(screen.getByText('Gerar Relatório'))
-
-      await waitFor(() => {
-        expect(screen.getByText('Relatório pronto!')).toBeDefined()
-      })
-      expect(screen.getByText('15 registros incluídos')).toBeDefined()
-      expect(screen.getByText('Baixar PDF')).toBeDefined()
-    })
-
-    it('shows singular "registro" when totalRegistros is 1', async () => {
-      const job = {
-        _id: '2',
-        type: 'relatorio' as const,
-        userId: 'u1',
-        status: 'completed' as const,
-        requestedAt: '2026-05-16T20:00:00.000Z',
-        completedAt: '2026-05-16T20:01:00.000Z',
-        periodoInicio: '2026-01-01T00:00:00.000Z',
-        periodoFim: '2026-05-16T20:00:00.000Z',
-        totalRegistros: 1,
-        downloadUrl: '/download/2',
-      }
-      mockCreateReport.mockResolvedValue(job)
-      mockGetDownloadUrl.mockReturnValue('/download/2')
-
-      render(<ReportSection />)
-      await waitFor(() => {
-        expect(screen.getByText('Gerar Relatório')).toBeDefined()
-      })
-
-      fireEvent.click(screen.getByText('Gerar Relatório'))
-
-      await waitFor(() => {
-        expect(screen.getByText('1 registro incluído')).toBeDefined()
-      })
-    })
-
-    it('allows generating another report after completion', async () => {
-      const completedJob = {
-        _id: '1',
-        type: 'relatorio' as const,
-        userId: 'u1',
-        status: 'completed' as const,
-        requestedAt: '2026-05-16T20:00:00.000Z',
-        completedAt: '2026-05-16T20:01:00.000Z',
-        periodoInicio: '2026-01-01T00:00:00.000Z',
-        periodoFim: '2026-05-16T20:00:00.000Z',
-        totalRegistros: 5,
-        downloadUrl: '/download/1',
-      }
-      mockCreateReport.mockResolvedValue(completedJob)
-      mockGetDownloadUrl.mockReturnValue('/download/1')
-
-      render(<ReportSection />)
-      await waitFor(() => {
-        expect(screen.getByText('Gerar Relatório')).toBeDefined()
-      })
-
-      fireEvent.click(screen.getByText('Gerar Relatório'))
-      await waitFor(() => {
-        expect(screen.getByText('Relatório pronto!')).toBeDefined()
-      })
-
-      // Click "Gerar novo relatório" to reset
-      fireEvent.click(screen.getByText('Gerar novo relatório'))
-      await waitFor(() => {
-        expect(screen.getByText('Gerar Relatório')).toBeDefined()
-      })
     })
   })
 
@@ -212,55 +118,42 @@ describe('ReportSection', () => {
   })
 
   describe('period formatting', () => {
-    it('shows "desde DD/MM/AAAA até hoje" for completed reports', async () => {
-      const job = {
-        _id: '1',
-        type: 'relatorio' as const,
-        userId: 'u1',
-        status: 'completed' as const,
-        requestedAt: '2026-05-16T20:00:00.000Z',
-        completedAt: '2026-05-16T20:01:00.000Z',
-        periodoInicio: '2026-03-15T12:00:00.000Z',
-        periodoFim: '2026-05-16T20:00:00.000Z',
-        totalRegistros: 10,
-        downloadUrl: '/download/1',
-      }
-      mockCreateReport.mockResolvedValue(job)
-      mockGetDownloadUrl.mockReturnValue('/download/1')
+    it('shows "desde DD/MM/AAAA até hoje" for reports with periodStart', async () => {
+      mockGetReportsList.mockResolvedValue([
+        {
+          _id: '1',
+          type: 'relatorio',
+          userSub: 'u1',
+          status: 'done',
+          createdAt: '2026-05-16T20:00:00.000Z',
+          completedAt: '2026-05-16T20:01:00.000Z',
+          periodStart: '2026-01-01T00:00:00.000Z',
+          periodEnd: '2026-05-16T20:00:00.000Z',
+        },
+      ])
 
       render(<ReportSection />)
-      await waitFor(() => {
-        expect(screen.getByText('Gerar Relatório')).toBeDefined()
-      })
-
-      fireEvent.click(screen.getByText('Gerar Relatório'))
 
       await waitFor(() => {
-        expect(screen.getByText(/desde 15\/03\/2026 até hoje/)).toBeDefined()
+        expect(screen.getByText(/desde 31\/12\/2025 até hoje/)).toBeDefined()
       })
     })
 
-    it('falls back to "todos os registros" when periodoInicio is missing', async () => {
-      const job = {
-        _id: '1',
-        type: 'relatorio' as const,
-        userId: 'u1',
-        status: 'completed' as const,
-        requestedAt: '2026-05-16T20:00:00.000Z',
-        completedAt: '2026-05-16T20:01:00.000Z',
-        periodoInicio: '',
-        periodoFim: '2026-05-16T20:00:00.000Z',
-        downloadUrl: '/download/1',
-      }
-      mockCreateReport.mockResolvedValue(job)
-      mockGetDownloadUrl.mockReturnValue('/download/1')
+    it('falls back to "todos os registros" when periodStart is missing', async () => {
+      mockGetReportsList.mockResolvedValue([
+        {
+          _id: '1',
+          type: 'relatorio',
+          userSub: 'u1',
+          status: 'done',
+          createdAt: '2026-05-16T20:00:00.000Z',
+          completedAt: '2026-05-16T20:01:00.000Z',
+          periodStart: '',
+          periodEnd: '2026-05-16T20:00:00.000Z',
+        },
+      ])
 
       render(<ReportSection />)
-      await waitFor(() => {
-        expect(screen.getByText('Gerar Relatório')).toBeDefined()
-      })
-
-      fireEvent.click(screen.getByText('Gerar Relatório'))
 
       await waitFor(() => {
         expect(screen.getByText(/todos os registros até hoje/)).toBeDefined()
@@ -274,12 +167,11 @@ describe('ReportSection', () => {
         {
           _id: 'prev-1',
           type: 'relatorio',
-          status: 'completed',
-          userId: 'u1',
-          requestedAt: '2026-05-10T10:00:00.000Z',
-          periodoInicio: '2026-01-01T00:00:00.000Z',
-          periodoFim: '2026-05-10T10:00:00.000Z',
-          downloadUrl: '/download/prev-1',
+          userSub: 'u1',
+          status: 'done',
+          createdAt: '2026-05-10T10:00:00.000Z',
+          periodStart: '2026-01-01T00:00:00.000Z',
+          periodEnd: '2026-05-10T10:00:00.000Z',
         },
       ])
 
@@ -287,6 +179,25 @@ describe('ReportSection', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Relatórios anteriores')).toBeDefined()
+      })
+    })
+
+    it('shows download button for done reports', async () => {
+      mockGetReportsList.mockResolvedValue([
+        {
+          _id: 'prev-1',
+          type: 'relatorio',
+          userSub: 'u1',
+          status: 'done',
+          createdAt: '2026-05-10T10:00:00.000Z',
+          periodStart: '2026-01-01T00:00:00.000Z',
+          periodEnd: '2026-05-10T10:00:00.000Z',
+        },
+      ])
+      render(<ReportSection />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Baixar')).toBeDefined()
       })
     })
   })

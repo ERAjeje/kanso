@@ -14,7 +14,21 @@ function notifySyncState(state: SyncState): void {
   syncListeners.forEach(fn => fn(state))
 }
 
-const COUCHDB_URL = import.meta.env.VITE_COUCHDB_URL
+const COUCHDB_RAW = import.meta.env.VITE_COUCHDB_URL
+const COUCHDB_URL = /^https?:\/\//.test(COUCHDB_RAW)
+  ? COUCHDB_RAW
+  : `${window.location.origin}${COUCHDB_RAW}`
+
+async function cleanupStaleDatabases(): Promise<void> {
+  const stale = ['registros', 'sentimentos', 'preferencias']
+  await Promise.allSettled(
+    stale.map(name =>
+      new PouchDB(`/db/${name}`).destroy().catch(() => {})
+    )
+  )
+}
+
+cleanupStaleDatabases()
 
 function createSyncedDB(dbName: string): { local: PouchDB.Database; remote: PouchDB.Database } {
   const local = new PouchDB(`kanso_${dbName}`)

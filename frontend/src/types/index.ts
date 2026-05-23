@@ -28,14 +28,13 @@ export interface ReportJob {
   _id: string
   _rev?: string
   type: 'relatorio'
-  userId: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  requestedAt: string
+  userSub: string
+  status: 'pending' | 'processing' | 'done' | 'failed'
+  createdAt?: string
   completedAt?: string
-  periodoInicio: string
-  periodoFim: string
-  totalRegistros?: number
-  downloadUrl?: string
+  periodStart?: string
+  periodEnd?: string
+  fileName?: string
   errorMessage?: string
 }
 

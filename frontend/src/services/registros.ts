@@ -37,8 +37,8 @@ export async function getRegistros(): Promise<RegistroWithAnalise[]> {
     .filter((doc: RegistroDoc) => doc.type === 'registro')
     .sort((a: RegistroDoc, b: RegistroDoc) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
 
-  // Fetch analise_nlp docs and merge in-memory
-  const analiseResult = await registrosDB.allDocs<AnaliseNlpDoc>({ include_docs: true })
+  // Fetch analise_nlp docs from sentimentosDB and merge in-memory
+  const analiseResult = await sentimentosDB.allDocs<AnaliseNlpDoc>({ include_docs: true })
   const analiseMap = new Map<string, AnaliseNlpDoc>()
   for (const row of analiseResult.rows) {
     const doc = row.doc!
