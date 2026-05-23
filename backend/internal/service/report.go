@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 
@@ -15,6 +16,28 @@ import (
 	"github.com/edson/kanso-api/internal/repository"
 	"github.com/edson/kanso-api/internal/templates"
 )
+
+type EmotionSummaryItem struct {
+	Emotion string
+	Count   int
+}
+
+type RegistroReportItem struct {
+	Data        string
+	Sentimento  string
+	Sensacoes   string
+	Contexto    string
+	Pensamentos string
+	Emocoes     []repository.EmotionScore
+}
+
+type ReportData struct {
+	GeneratedAt    string
+	PeriodStart    string
+	PeriodEnd      string
+	Registros      []RegistroReportItem
+	EmotionSummary []EmotionSummaryItem
+}
 
 type ReportService struct {
 	mu        sync.Mutex
@@ -81,12 +104,76 @@ func (s *ReportService) generatePDF(ctx context.Context, jobID, sub, periodStart
 		log.Printf("failed to update job %s to processing: %v", jobID, err)
 	}
 
-	// Render HTML template with report data
-	tmplData := map[string]interface{}{
-		"GeneratedAt": time.Now().UTC().Format("02/01/2006 às 15:04 MST"),
-		"PeriodStart": periodStart,
-		"PeriodEnd":   periodEnd,
-		"Registros":   []interface{}{}, // Registros data comes from CouchDB via registros DB
+	// Fetch registros for the period
+	registros, err := s.couchRepo.FindRegistrosByPeriod(sub, periodStart, periodEnd)
+	if err != nil {
+		errMsg := fmt.Sprintf("fetch registros: %v", err)
+		s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusFailed, "", errMsg)
+		log.Printf("PDF generation failed for job %s: %s", jobID, errMsg)
+		return
+	}
+
+	// Collect registro IDs to fetch analysis docs
+	registroIDs := make([]string, len(registros))
+	for i, r := range registros {
+		registroIDs[i] = r.ID
+	}
+
+	// Fetch analysis docs
+	analiseDocs, err := s.couchRepo.FindAnaliseByRegistroIds(registroIDs)
+	if err != nil {
+		errMsg := fmt.Sprintf("fetch analise docs: %v", err)
+		s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusFailed, "", errMsg)
+		log.Printf("PDF generation failed for job %s: %s", jobID, errMsg)
+		return
+	}
+
+	// Build analise lookup map
+	analiseMap := make(map[string]repository.AnaliseDoc)
+	for _, a := range analiseDocs {
+		analiseMap[a.RegistroID] = a
+	}
+
+	// Build report items with emotion data
+	reportItems := make([]RegistroReportItem, 0, len(registros))
+	for _, r := range registros {
+		item := RegistroReportItem{
+			Data:        r.DataHora,
+			Sentimento:  r.Sentimento,
+			Sensacoes:   r.Sensacoes,
+			Contexto:    r.Contexto,
+			Pensamentos: r.Pensamentos,
+		}
+		if a, ok := analiseMap[r.ID]; ok {
+			item.Emocoes = a.Emotions
+		}
+		reportItems = append(reportItems, item)
+	}
+
+	// Compute emotion summary (aggregate frequency across all registros in period)
+	emotionCounts := make(map[string]int)
+	for _, item := range reportItems {
+		for _, e := range item.Emocoes {
+			emotionCounts[e.Emotion]++
+		}
+	}
+
+	summary := make([]EmotionSummaryItem, 0, len(emotionCounts))
+	for emotion, count := range emotionCounts {
+		summary = append(summary, EmotionSummaryItem{Emotion: emotion, Count: count})
+	}
+	// Sort by count descending
+	sort.Slice(summary, func(i, j int) bool {
+		return summary[i].Count > summary[j].Count
+	})
+
+	// Build template data
+	tmplData := ReportData{
+		GeneratedAt:    time.Now().UTC().Format("02/01/2006 às 15:04 MST"),
+		PeriodStart:    periodStart,
+		PeriodEnd:      periodEnd,
+		Registros:      reportItems,
+		EmotionSummary: summary,
 	}
 
 	var htmlBuf bytes.Buffer
