@@ -462,3 +462,275 @@ func (c *CouchDB) GetUser(id string) (*UserDoc, error) {
 	}
 	return &doc, nil
 }
+
+// --- NLP Watcher Types ---
+
+type ChangesResult struct {
+	Seq     string              `json:"seq"`
+	ID      string              `json:"id"`
+	Changes []map[string]string `json:"changes"`
+	Doc     json.RawMessage     `json:"doc,omitempty"`
+	Deleted bool                `json:"_deleted,omitempty"`
+}
+
+type ChangesResponse struct {
+	Results  []ChangesResult `json:"results"`
+	LastSeq  string          `json:"last_seq"`
+}
+
+type CheckpointDoc struct {
+	ID        string `json:"_id,omitempty"`
+	Rev       string `json:"_rev,omitempty"`
+	Type      string `json:"type"`
+	Watcher   string `json:"watcher"`
+	LastSeq   string `json:"last_seq"`
+	UpdatedAt string `json:"updatedAt,omitempty"`
+}
+
+type EmotionScore struct {
+	Emotion string  `json:"emotion"`
+	Score   float32 `json:"score"`
+}
+
+type AnaliseDoc struct {
+	ID               string             `json:"_id,omitempty"`
+	Rev              string             `json:"_rev,omitempty"`
+	Type             string             `json:"type"`
+	UserSub          string             `json:"userSub"`
+	RegistroID       string             `json:"registroId"`
+	EmotionPrincipal string             `json:"emotionPrincipal"`
+	Emotions         []EmotionScore     `json:"emotions"`
+	Scores           map[string]float32 `json:"scores"`
+	Intensidade      float32            `json:"intensidade"`
+	ModeloVersao     string             `json:"modeloVersao"`
+	AnalisadoEm      string             `json:"analisadoEm,omitempty"`
+}
+
+type PeriodRegistroDoc struct {
+	ID          string `json:"_id,omitempty"`
+	Rev         string `json:"_rev,omitempty"`
+	Type        string `json:"type"`
+	UserSub     string `json:"userId"`
+	DataHora    string `json:"dataHora"`
+	Sensacoes   string `json:"sensacoes"`
+	Sentimento  string `json:"sentimentoNome"`
+	Contexto    string `json:"contexto"`
+	Pensamentos string `json:"pensamentos"`
+}
+
+// --- NLP Watcher Repository Methods ---
+
+// GetChanges fetches the _changes feed for a database using long-poll.
+// `since` is the last sequence ID (use "0" for initial/backfill).
+// Uses a 30s HTTP timeout (25s long-poll + 5s buffer).
+// Always uses include_docs=true so we can filter by doc.type.
+func (c *CouchDB) GetChanges(db, since string) (*ChangesResponse, error) {
+	url := fmt.Sprintf("%s/%s/_changes?since=%s&timeout=25000&feed=longpoll&include_docs=true", c.baseURL, db, since)
+
+	// Use longer timeout for long-poll (25s poll + buffer)
+	client := &http.Client{Timeout: 30 * time.Second}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("get changes: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("get changes status: %d", resp.StatusCode)
+	}
+
+	var changes ChangesResponse
+	if err := json.NewDecoder(resp.Body).Decode(&changes); err != nil {
+		return nil, fmt.Errorf("decode changes: %w", err)
+	}
+	return &changes, nil
+}
+
+// GetCheckpoint reads the NLP watcher checkpoint document.
+// Returns ("", nil) if no checkpoint exists yet.
+func (c *CouchDB) GetCheckpoint() (*CheckpointDoc, error) {
+	url := fmt.Sprintf("%s/registros/checkpoint:nlp_watcher", c.baseURL)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("get checkpoint: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("get checkpoint status: %d", resp.StatusCode)
+	}
+
+	var doc CheckpointDoc
+	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
+		return nil, fmt.Errorf("decode checkpoint: %w", err)
+	}
+	return &doc, nil
+}
+
+// SaveCheckpoint creates or updates the NLP watcher checkpoint document.
+// It does a GET-then-PUT to handle _rev for updates.
+func (c *CouchDB) SaveCheckpoint(seq string) error {
+	// Try to get existing checkpoint for _rev
+	existing, err := c.GetCheckpoint()
+	if err != nil {
+		return fmt.Errorf("get existing checkpoint before save: %w", err)
+	}
+
+	doc := &CheckpointDoc{
+		Type:      "checkpoint",
+		Watcher:   "nlp",
+		LastSeq:   seq,
+		UpdatedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+
+	if existing != nil {
+		doc.ID = existing.ID
+		doc.Rev = existing.Rev
+	} else {
+		doc.ID = "checkpoint:nlp_watcher"
+	}
+
+	return c.putDoc("registros", doc.ID, doc)
+}
+
+// SaveAnalise writes an analysis document to the sentimentos database.
+// ID format: "analise:{registroId}"
+func (c *CouchDB) SaveAnalise(doc *AnaliseDoc) error {
+	doc.Type = "analise_nlp"
+	if doc.ID == "" {
+		doc.ID = "analise:" + doc.RegistroID
+	}
+	if doc.AnalisadoEm == "" {
+		doc.AnalisadoEm = time.Now().UTC().Format(time.RFC3339)
+	}
+	return c.putDoc("sentimentos", doc.ID, doc)
+}
+
+// FindRegistrosByPeriod queries registros for a user between two timestamps.
+// Uses _find with a selector on type, userSub, and dataHora range.
+// LIMITATION: No CouchDB index on dataHora — acceptable for user-scale datasets (<5000 docs).
+func (c *CouchDB) FindRegistrosByPeriod(userSub, periodStart, periodEnd string) ([]PeriodRegistroDoc, error) {
+	selector := map[string]interface{}{
+		"type":    "registro",
+		"userId": userSub,
+		"dataHora": map[string]interface{}{
+			"$gte": periodStart,
+			"$lte": periodEnd,
+		},
+	}
+	query := mangoQuery{
+		Selector: selector,
+		Sort:     []map[string]string{{"dataHora": "desc"}},
+		Limit:    1000,
+	}
+
+	body, err := json.Marshal(query)
+	if err != nil {
+		return nil, fmt.Errorf("marshal query: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/registros/_find", c.baseURL)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("find registros: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("find registros status: %d", resp.StatusCode)
+	}
+
+	var mResp mangoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&mResp); err != nil {
+		return nil, fmt.Errorf("decode response: %w", err)
+	}
+
+	docs := make([]PeriodRegistroDoc, 0, len(mResp.Docs))
+	for _, raw := range mResp.Docs {
+		var doc PeriodRegistroDoc
+		if err := json.Unmarshal(raw, &doc); err != nil {
+			return nil, fmt.Errorf("unmarshal registro: %w", err)
+		}
+		docs = append(docs, doc)
+	}
+	return docs, nil
+}
+
+// FindAnaliseByRegistroIds queries analysis documents by their associated registro IDs.
+// Accepts a slice of registro IDs and returns matching analise_nlp docs.
+func (c *CouchDB) FindAnaliseByRegistroIds(ids []string) ([]AnaliseDoc, error) {
+	if len(ids) == 0 {
+		return []AnaliseDoc{}, nil
+	}
+
+	selector := map[string]interface{}{
+		"type": "analise_nlp",
+		"registroId": map[string]interface{}{
+			"$in": ids,
+		},
+	}
+	query := mangoQuery{
+		Selector: selector,
+		Limit:    1000,
+	}
+
+	body, err := json.Marshal(query)
+	if err != nil {
+		return nil, fmt.Errorf("marshal query: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/sentimentos/_find", c.baseURL)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("find analise: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("find analise status: %d", resp.StatusCode)
+	}
+
+	var mResp mangoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&mResp); err != nil {
+		return nil, fmt.Errorf("decode response: %w", err)
+	}
+
+	docs := make([]AnaliseDoc, 0, len(mResp.Docs))
+	for _, raw := range mResp.Docs {
+		var doc AnaliseDoc
+		if err := json.Unmarshal(raw, &doc); err != nil {
+			return nil, fmt.Errorf("unmarshal analise: %w", err)
+		}
+		docs = append(docs, doc)
+	}
+	return docs, nil
+}

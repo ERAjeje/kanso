@@ -1,5 +1,5 @@
 import { registrosDB, sentimentosDB, getUserId } from './pouchdb'
-import type { RegistroDoc, SentimentoDoc } from '../types'
+import type { RegistroDoc, SentimentoDoc, AnaliseNlpDoc, RegistroWithAnalise } from '../types'
 import type PouchDB from 'pouchdb-browser'
 
 type RegistroInput = Omit<RegistroDoc, '_id' | '_rev' | 'type' | 'userId' | 'createdAt' | 'updatedAt'>
@@ -30,12 +30,28 @@ export async function saveSentimento(nome: string): Promise<SentimentoDoc> {
   return doc
 }
 
-export async function getRegistros(): Promise<RegistroDoc[]> {
+export async function getRegistros(): Promise<RegistroWithAnalise[]> {
   const result = await registrosDB.allDocs<RegistroDoc>({ include_docs: true })
-  return result.rows
+  const registros = result.rows
     .map((row: PouchDB.Core.Row<RegistroDoc>) => row.doc!)
     .filter((doc: RegistroDoc) => doc.type === 'registro')
     .sort((a: RegistroDoc, b: RegistroDoc) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime())
+
+  // Fetch analise_nlp docs from sentimentosDB and merge in-memory
+  const analiseResult = await sentimentosDB.allDocs<AnaliseNlpDoc>({ include_docs: true })
+  const analiseMap = new Map<string, AnaliseNlpDoc>()
+  for (const row of analiseResult.rows) {
+    const doc = row.doc!
+    if (doc.type === 'analise_nlp') {
+      const registroId = doc._id.replace('analise:', '')
+      analiseMap.set(registroId, doc)
+    }
+  }
+
+  return registros.map((r: RegistroDoc) => ({
+    ...r,
+    analise: analiseMap.get(r._id),
+  }))
 }
 
 export async function getSentimentos(): Promise<SentimentoDoc[]> {

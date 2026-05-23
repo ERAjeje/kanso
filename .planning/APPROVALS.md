@@ -13,7 +13,14 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 ## Approved Plans
 
 | Plan ID | Description | Approved At | Executed | 
-|---------|-------------|-------------|----------|
+| 07-01 | Infra NLP — Python FastAPI/gRPC scaffold, Docker, model download | 2026-05-23 | 2026-05-23 |
+| 07-02-01 | Data pipeline — mappings, curated phrases, config | 2026-05-23 | 2026-05-23 |
+| 07-02-02 | Training — back-translation + BERTimbau fine-tuning | 2026-05-23 | 2026-05-23 |
+| 07-02-03 | Inference — classifier, server, validation, Docker | 2026-05-23 | 2026-05-23 |
+| 07-03-01 | Repository: CouchDB _changes, checkpoint, analise types + methods | 2026-05-23 | 2026-05-23 |
+| 07-03-02 | Watcher: goroutine event loop, gRPC calls, exponential backoff, tests | 2026-05-23 | 2026-05-23 |
+| 07-03-03 | Frontend: PouchDB merge, emotion chips in RegistroCard | 2026-05-23 | 2026-05-23 |
+| 07-03-04 | PDF: emotion summary section + per-registro emotions | 2026-05-23 | 2026-05-23 |
 | 04-01 | Resolve All Tech Debt (P0 + P1 + P2) | 2026-05-17 | 2026-05-17 |
 | fix-01 | Fix Google Sign-In button not rendering (GIS script missing in index.html) | 2026-05-17 | 2026-05-17 |
 | fix-02 | Fix Docker env vars: GOOGLE_CLIENT_ID não chegava ao container | 2026-05-17 | 2026-05-17 |
@@ -23,6 +30,8 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 06-01 | Push Notifications — backend + frontend (SW + settings) + scheduler + infra | 2026-05-17 | 2026-05-17 |
 | fix-push-ux | Push notification UX: toasts para feedback visual | 2026-05-17 | 2026-05-17 |
 | 06-02 | Push preferences via PouchDB sync (offline-first) | 2026-05-17 | 2026-05-17 |
+| fix-couchdb-jwt-auth | Configure CouchDB JWT auth — local.ini, docker-compose mount, _security docs | 2026-05-23 | 2026-05-23 |
+| fix-sentimentos-db | Move analise_nlp do registros DB para sentimentos DB | 2026-05-23 | — |
 
 ---
 
@@ -36,8 +45,24 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 ## Log
 
+| 2026-05-23 | fix-couchdb-jwt-auth | approved | PouchDB sync fix — CouchDB JWT auth config + _security docs |
+| 2026-05-23 | fix-couchdb-jwt-auth | executed | infra/couchdb/local.ini + docker-compose mount + _security in main.go |
+| 2026-05-23 | fix-sentimentos-db | approved | Move analise_nlp do registros DB para sentimentos DB |
+| 2026-05-23 | fix-sentimentos-db | executed | couchdb.go + watcher.go + registros.ts — SaveAnalise→sentimentos, FindAnalise→sentimentos/_find, getRegistros→sentimentosDB |
+| 2026-05-23 | debug-analise-db-errado | fixed | Docker rebuild + restart + migrate 7 analise docs registros→sentimentos |
+| 2026-05-23 | fix-mango-indexes | fixed | Add Mango indexes on relatorios (type+userSub+createdAt) and registros (type+userSub+dataHora) |
+| 2026-05-23 | fix-frontend-contract-reports | fixed | Align ReportJob type with backend JSON; use downloadReport() with auth instead of <a href> |
+| 2026-05-23 | fix-report-userId | fixed | PeriodRegistroDoc.userSub→userId; FindRegistrosByPeriod selector userId; index updated |
 | Date | Plan | Action | Detail |
-|------|------|--------|--------|
+| 2026-05-23 | 07-01 | approved | Infra NLP — Python FastAPI/gRPC scaffold, Docker, model download |
+| 2026-05-23 | 07-01 | executed | Infra NLP — 6 tasks: proto, FastAPI+gRPC, Docker, docker-compose, Go client, docs |
+| 2026-05-23 | 07-03-01 | approved | Repository: CouchDB _changes, checkpoint, analise types + methods |
+| 2026-05-23 | 07-03-02 | approved | Watcher: goroutine event loop, gRPC calls, exponential backoff, tests |
+| 2026-05-23 | 07-03-03 | approved | Frontend: PouchDB merge, emotion chips in RegistroCard |
+| 2026-05-23 | 07-03-04 | approved | PDF: emotion summary section + per-registro emotions |
+| 2026-05-23 | 07-02-01 | approved | Data pipeline — mappings, curated phrases, config |
+| 2026-05-23 | 07-02-02 | approved | Training — back-translation + BERTimbau fine-tuning |
+| 2026-05-23 | 07-02-03 | approved | Inference — classifier, server, validation, Docker |
 | 2026-05-17 | 04-01 | approved | Tech Debt resolution |
 | 2026-05-17 | 04-01 | executed | Tech Debt resolution |
 | 2026-05-17 | fix-01 | approved | Login Google Sign-In fix |
@@ -67,4 +92,5 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 | Timestamp | Reason | State File |
 |-----------|--------|------------|
-| — | — | — |
+| 2026-05-23 | session_reset | Auto-saved state before /new. Session handoff. NLP context gathered. |
+| 2026-05-23 | session_reset | Auto-saved state before /new. 07-03 context gathered, ready for planning. |

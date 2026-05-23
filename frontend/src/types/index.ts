@@ -28,13 +28,35 @@ export interface ReportJob {
   _id: string
   _rev?: string
   type: 'relatorio'
-  userId: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  requestedAt: string
+  userSub: string
+  status: 'pending' | 'processing' | 'done' | 'failed'
+  createdAt?: string
   completedAt?: string
-  periodoInicio: string
-  periodoFim: string
-  totalRegistros?: number
-  downloadUrl?: string
+  periodStart?: string
+  periodEnd?: string
+  fileName?: string
   errorMessage?: string
+}
+
+export interface EmotionScore {
+  emotion: string
+  score: number
+}
+
+export interface AnaliseNlpDoc {
+  _id: string
+  _rev?: string
+  type: 'analise_nlp'
+  userId: string
+  registroId: string
+  emotionPrincipal: string
+  emotions: EmotionScore[]
+  scores: Record<string, number>
+  intensidade: number
+  modeloVersao: string
+  analisadoEm: string
+}
+
+export interface RegistroWithAnalise extends RegistroDoc {
+  analise?: AnaliseNlpDoc
 }

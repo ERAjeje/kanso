@@ -29,6 +29,7 @@ services:
       - "5984:5984"
     volumes:
       - couchdb-data:/opt/couchdb/data
+      - ./couchdb/local.ini:/opt/couchdb/etc/local.d/10-jwt-auth.ini
     mem_limit: 512m
     restart: unless-stopped
     healthcheck:
@@ -54,6 +55,7 @@ services:
     environment:
       - COUCHDB_URL=http://couchdb:5984
       - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
       - PDF_TMP_DIR=/tmp/kanso-pdf
       - CHROMEDP_PATH=/headless-shell/headless-shell
     ports:
@@ -83,6 +85,7 @@ services:
     environment:
       - COUCHDB_URL=http://couchdb:5984
       - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
       - API_URL=http://api:8080
     depends_on:
       couchdb:
@@ -90,6 +93,28 @@ services:
       api:
         condition: service_started
     restart: unless-stopped
+
+  nlp:
+    build:
+      context: ../nlp-service
+      dockerfile: Dockerfile
+    container_name: kanso-nlp
+    environment:
+      - GRPC_PORT=50051
+      - HTTP_PORT=8000
+    expose:
+      - "50051"
+      - "8000"
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    mem_limit: 4g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   couchdb-data:

@@ -6,7 +6,7 @@ vi.mock('./auth', () => ({
   authenticatedFetch: mockAuthenticatedFetch,
 }))
 
-const { createReport, getReportStatus, getReportsList, getDownloadUrl } = await import('./reports')
+const { createReport, getReportStatus, getReportsList, getDownloadUrl, downloadReport } = await import('./reports')
 
 describe('reports API service', () => {
   beforeEach(() => {
@@ -14,11 +14,10 @@ describe('reports API service', () => {
   })
 
   describe('createReport', () => {
-    it('POSTs to /api/reports and returns the report job', async () => {
-      const mockJob = { _id: '1', status: 'pending' }
+    it('POSTs to /api/reports and returns the jobId', async () => {
       mockAuthenticatedFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockJob),
+        json: () => Promise.resolve({ jobId: 'abc-123' }),
       })
 
       const result = await createReport()
@@ -27,7 +26,7 @@ describe('reports API service', () => {
         '/api/reports',
         { method: 'POST' }
       )
-      expect(result).toEqual(mockJob)
+      expect(result).toEqual({ jobId: 'abc-123' })
     })
 
     it('throws on non-ok response', async () => {
@@ -105,6 +104,40 @@ describe('reports API service', () => {
     it('encodes special characters in the ID', () => {
       const url = getDownloadUrl('id/with+slashes')
       expect(url).toBe('/api/reports/id%2Fwith%2Bslashes/download')
+    })
+  })
+
+  describe('downloadReport', () => {
+    beforeEach(() => {
+      // Mock Blob and URL.createObjectURL
+      globalThis.URL.createObjectURL = vi.fn(() => 'blob:test')
+      globalThis.URL.revokeObjectURL = vi.fn()
+    })
+
+    it('fetches the PDF with auth and triggers download', async () => {
+      const blob = new Blob(['pdf-content'], { type: 'application/pdf' })
+      mockAuthenticatedFetch.mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(blob),
+      })
+
+      const appendChild = vi.spyOn(document.body, 'appendChild')
+      const removeChild = vi.spyOn(document.body, 'removeChild')
+
+      await downloadReport('abc-123')
+
+      expect(mockAuthenticatedFetch).toHaveBeenCalledWith(
+        '/api/reports/abc-123/download'
+      )
+      expect(appendChild).toHaveBeenCalled()
+      expect(removeChild).toHaveBeenCalled()
+      expect(globalThis.URL.revokeObjectURL).toHaveBeenCalledWith('blob:test')
+    })
+
+    it('throws on non-ok response', async () => {
+      mockAuthenticatedFetch.mockResolvedValue({ ok: false })
+
+      await expect(downloadReport('1')).rejects.toThrow('Falha ao baixar relatório')
     })
   })
 })

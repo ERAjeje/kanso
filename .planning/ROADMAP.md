@@ -10,6 +10,10 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - [x] **Phase 2: Core Diary — Registro & Sync** - Emotion registration form, offline-first PouchDB storage, cloud sync
 - [x] **Phase 3: Reports** - PDF report generation with async job infrastructure
 - [x] **Phase 4: Technical Debt & Dev Experience** - Env vars, CORS, Vite proxy, Traefik, Makefile, nlp-service docs
+- [x] **Phase 5: Histórico de Registros** - Chronological registration history with expandable cards
+- [x] **Phase 6: Push Notifications** - FCM push reminders at configurable times
+- [x] **Phase 7: NLP Analysis** - Emotion analysis via BERTimbau, async pipeline, CouchDB enrichment
+- [ ] **Phase 8: V3 — Integração & Qualidade** - Refinamentos pós-NLP, segurança, WhatsApp
 
 ## Phase Details
 
@@ -123,6 +127,8 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 4. Technical Debt & Dev Experience | 1/1 | Complete | 2026-05-17 |
 | 5. Histórico de Registros | 1/1 | Complete | 2026-05-17 |
 | 6. Push Notifications | 1/1 | Complete | 2026-05-17 |
+| 7. NLP Analysis | 4/4 | Complete | 07-01 ✅, 07-02 ✅, 07-03 ✅ |
+| 8. V3 — Integração & Qualidade | — | Planned | — |
 
 ## Phase 6: Push Notifications
 
@@ -141,4 +147,51 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 **Plans**: 1 plan (single wave)
 **Waves**:
 - **Wave 1** *(Plan 01)* — All tasks: backend push endpoints + FCM service, service worker + permission hook + settings UI, scheduler microservice, tests, infra
+**UI hint**: yes
+
+### Phase 7: NLP Analysis
+
+**Goal**: Registration text (sensações + contexto + pensamentos) is analyzed for emotion patterns, enriching the diary with detected emotions
+**Mode**: standard
+**Depends on**: Phase 2 (registrations), Phase 5 (history)
+**Requirements**: NLP-01, NLP-02, NLP-03
+**Success Criteria** (what must be TRUE):
+  1. New registrations trigger async NLP analysis via CouchDB _changes feed
+  2. Python/FastAPI service analyzes text using BERTimbau fine-tuned for 10-15 Portuguese emotions
+  3. Results stored in separate CouchDB document (`analise:{registroId}`, type: `analise_nlp`)
+  4. Existing registrations are backfilled on first deployment
+  5. Detected emotions appear in History (RegistroCard) and PDF reports
+  6. Analysis never blocks registration — fully async (NLP-03)
+**Plans**: 4 plans | Sub-phases: 07-01 ✅ → 07-02 ✅ → 07-03 ✅
+**Sub-phases**:
+- **07-01 — Infra NLP ✅**: Python/FastAPI scaffold, gRPC service, Dockerfile, model download at build time (2026-05-23)
+- **07-02 — Modelo ✅**: BERTimbau fine-tuning, emotion classification pipeline, model validation with Portuguese phrases
+- **07-03 — Integração ✅**: Go _changes listener, CouchDB enrichment, frontend display in RegistroCard + report
+**Plans (07-02)**:
+- [x] 07-02-01-PLAN.md — Data pipeline: label mapping, curated phrases, config constants ✅
+- [x] 07-02-02-PLAN.md — Training: back-translation augmentation + BERTimbau fine-tuning script ✅
+- [x] 07-02-03-PLAN.md — Inference: classifier pipeline, server integration, validation tests, Dockerfile ✅
+**Plans (07-03)**:
+- [x] 07-03-01-PLAN.md — Repository methods: CouchDB types for _changes, checkpoint, analise docs ✅ Executed
+- [x] 07-03-02-PLAN.md — Watcher service: goroutine event loop, gRPC calls, test coverage ✅ Executed
+- [x] 07-03-03-PLAN.md — Frontend display: emotion chips in RegistroCard, PouchDB merge ✅ Executed
+- [x] 07-03-04-PLAN.md — PDF reports: emotion summary section + per-registro emotions ✅ Executed
+**Waves**:
+- **Wave 1** *(07-01)* — Python service scaffold + Docker + model download ✅
+- **Wave 2** *(07-02, Plan 01)* — Data pipeline: mappings, curated phrases, config constants ✅
+- **Wave 3** *(07-02, Plans 02+03, parallel)* — Training + inference/validation ✅
+- **Wave 4** *(07-03, Plan 01)* — Repository methods (CouchDB types, _changes, checkpoint) ✅
+- **Wave 5** *(07-03, Plans 02-04, parallel)* — Watcher service + Frontend display + PDF enrichment ✅
+**UI hint**: yes
+**Completed**: 2026-05-23
+
+### Phase 8: V3 — Integração & Qualidade
+
+**Goal**: Refinar experiência pós-NLP, corrigir vulnerabilidades e integrar WhatsApp para envio automático de relatórios
+**Mode**: standard
+**Depends on**: Phase 7
+**Planned activities**:
+1. **Refatorar emotion chips** — Melhorar visualização dos chips de sentimentos no frontend (RegistroCard) e no relatório PDF
+2. **Corrigir vulnerabilidades de segurança** — Auditoria e correção de falhas (CORS, headers, input sanitization, etc.)
+3. **WhatsApp automático** — Cadastrar telefone da psicóloga no perfil; enviar relatório PDF via WhatsApp ao gerar (Twilio API)
 **UI hint**: yes

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { FileText, Loader, AlertCircle, CheckCircle, Download } from 'lucide-react'
-import { createReport, getReportStatus, getReportsList, getDownloadUrl } from '../services/reports'
+import { createReport, getReportStatus, getReportsList, downloadReport } from '../services/reports'
 import type { ReportJob } from '../types'
 import { format } from 'date-fns'
 
@@ -25,7 +25,7 @@ export function ReportSection() {
     const id = setInterval(async () => {
       try {
         const job = await getReportStatus(jobIdRef.current!)
-        if (job.status === 'completed') {
+        if (job.status === 'done') {
           setState('completed')
           setLatestReport(job)
           setReports((prev) => [...prev.filter((r) => r._id !== job._id), job])
@@ -49,21 +49,21 @@ export function ReportSection() {
     setState('generating')
     setErrorMsg('')
     try {
-      const job = await createReport()
-      jobIdRef.current = job._id
-      if (job.status === 'completed') {
-        setState('completed')
-        setLatestReport(job)
-        setReports((prev) => [...prev.filter((r) => r._id !== job._id), job])
-        jobIdRef.current = null
-      } else {
-        setState('polling')
-      }
+      const { jobId } = await createReport()
+      jobIdRef.current = jobId
+      setState('polling')
     } catch {
       setState('error')
       setErrorMsg('Não foi possível iniciar a geração do relatório')
       jobIdRef.current = null
     }
+  }
+
+  const handleDownload = (id: string) => {
+    downloadReport(id).catch(() => {
+      setErrorMsg('Erro ao baixar relatório')
+      setState('error')
+    })
   }
 
   const handleReset = () => {
@@ -74,9 +74,9 @@ export function ReportSection() {
   }
 
   const formatPeriod = (job: ReportJob): string => {
-    if (!job.periodoInicio) return 'todos os registros até hoje'
+    if (!job.periodStart) return 'todos os registros até hoje'
     try {
-      const inicio = format(new Date(job.periodoInicio), 'dd/MM/yyyy')
+      const inicio = format(new Date(job.periodStart), 'dd/MM/yyyy')
       return `desde ${inicio} até hoje`
     } catch {
       return 'todos os registros até hoje'
@@ -146,21 +146,15 @@ export function ReportSection() {
             <p className="text-green-600 text-sm">
               {formatPeriod(latestReport)}
             </p>
-            {latestReport.totalRegistros !== undefined && (
-              <p className="text-green-600 text-sm mt-1">
-                {latestReport.totalRegistros} registro{latestReport.totalRegistros !== 1 ? 's' : ''} incluído
-                {latestReport.totalRegistros !== 1 ? 's' : ''}
-              </p>
-            )}
           </div>
 
-          <a
-            href={getDownloadUrl(latestReport._id)}
+          <button
+            onClick={() => handleDownload(latestReport._id)}
             className="w-full bg-indigo-600 text-white rounded-lg py-3 font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
           >
             <Download className="h-5 w-5" />
             Baixar PDF
-          </a>
+          </button>
 
           <button
             onClick={handleReset}
@@ -208,14 +202,14 @@ export function ReportSection() {
                   <span className="text-gray-600">
                     {formatPeriod(report)}
                   </span>
-                  {report.status === 'completed' && report.downloadUrl && (
-                    <a
-                      href={getDownloadUrl(report._id)}
+                  {report.status === 'done' && (
+                    <button
+                      onClick={() => handleDownload(report._id)}
                       className="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
                     >
                       <Download className="h-4 w-4" />
                       Baixar
-                    </a>
+                    </button>
                   )}
                 </li>
               ))}

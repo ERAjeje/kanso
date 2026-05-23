@@ -5,3 +5,6 @@ dist/
 *.log
 .secrets/
 scheduler/kanso-scheduler
+__pycache__/
+*.pyc
+.pytest_cache/

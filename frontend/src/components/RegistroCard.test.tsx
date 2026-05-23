@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { RegistroCard } from './RegistroCard'
-import type { RegistroDoc } from '../types'
+import type { RegistroDoc, RegistroWithAnalise, AnaliseNlpDoc } from '../types'
 
 function makeRegistro(overrides: Partial<RegistroDoc> = {}): RegistroDoc {
   return {
@@ -76,5 +76,66 @@ describe('RegistroCard', () => {
     fireEvent.click(screen.getByRole('button'))
     const labels = screen.getAllByText('Buscando sentimento')
     expect(labels.length).toBeGreaterThanOrEqual(1)
+  })
+})
+
+function makeEnrichedRegistro(overrides: Partial<RegistroDoc> = {}, analiseOverrides: Partial<AnaliseNlpDoc> = {}): RegistroWithAnalise {
+  return {
+    ...makeRegistro(overrides),
+    analise: {
+      _id: 'analise:' + (overrides._id || '1'),
+      type: 'analise_nlp',
+      userId: 'u1',
+      registroId: overrides._id || '1',
+      emotionPrincipal: 'ansiedade',
+      emotions: [
+        { emotion: 'ansiedade', score: 0.85 },
+        { emotion: 'medo', score: 0.42 },
+      ],
+      scores: { ansiedade: 0.85, medo: 0.42 },
+      intensidade: 0.85,
+      modeloVersao: 'v1.0',
+      analisadoEm: '2026-05-23T10:01:00Z',
+      ...analiseOverrides,
+    },
+  }
+}
+
+describe('emotion chips', () => {
+  it('shows emotionPrincipal chip when analise exists', () => {
+    const registro = makeEnrichedRegistro({ _id: '1' }, { emotionPrincipal: 'alegria' })
+    render(<RegistroCard registro={registro} />)
+    expect(screen.getByText('alegria')).toBeDefined()
+  })
+
+  it('shows emotionPrincipal chip with correct color class', () => {
+    const registro = makeEnrichedRegistro({ _id: '1' }, { emotionPrincipal: 'alegria' })
+    render(<RegistroCard registro={registro} />)
+    const chip = screen.getByText('alegria')
+    expect(chip.className).toContain('bg-emerald-100')
+    expect(chip.className).toContain('text-emerald-700')
+  })
+
+  it('shows secondary emotion chips', () => {
+    const registro = makeEnrichedRegistro({ _id: '1' })
+    render(<RegistroCard registro={registro} />)
+    // ansiedade appears in both heading (sentimentoNome) and chip — use getAllByText
+    const ansiedadeElements = screen.getAllByText('ansiedade')
+    expect(ansiedadeElements.length).toBeGreaterThanOrEqual(2)
+    // medo only appears as secondary chip
+    expect(screen.getByText('medo')).toBeDefined()
+  })
+
+  it('renders no chips when analise is undefined', () => {
+    const registro = makeRegistro({ _id: '1', sentimentoNome: 'outro' }) as RegistroWithAnalise
+    render(<RegistroCard registro={registro} />)
+    expect(screen.queryByText('medo')).toBeNull()
+  })
+
+  it('shows chips in collapsed state', () => {
+    const registro = makeEnrichedRegistro({ _id: '1' }, { emotionPrincipal: 'gratidão' })
+    render(<RegistroCard registro={registro} />)
+    // Card starts collapsed by default
+    expect(screen.getByText('gratidão')).toBeDefined()
   })
 })

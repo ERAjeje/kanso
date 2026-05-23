@@ -1,3 +1,18 @@
+---
+gsd_state_version: 1.0
+milestone: v2.0
+milestone_name: nlp-analysis
+status: "Phase 7 ✅ | All phases complete"
+last_updated: "2026-05-23T22:45:00.000Z"
+last_activity: "2026-05-23 — Phase 7 fully complete. V3 items added to roadmap."
+progress:
+  total_phases: 8
+  completed_phases: 7
+    total_plans: 21
+    completed_plans: 21
+    percent: 100
+---
+
 # Project State
 
 ## Project Reference
@@ -9,32 +24,32 @@ See: .planning/PROJECT.md (updated 2026-05-17)
 
 ## Current Position
 
-Phase: 6 — Push Notifications (executado)
-Branch: feat/06-push-notifications
-Status: Phase 5 ✅ | Phase 6 ✅
-Last activity: 2026-05-17 — Phase 6 executed (backend + SW + settings UI + scheduler)
+Phase: 8 — V3 — Integração & Qualidade (planned)
+Milestone: v2 — NLP Analysis ✅ (complete)
+Branch: master
+Status: Phase 7 ✅ | All phases complete
+Last activity: 2026-05-23 — Phase 7 fully complete with bug fixes; V3 roadmap registered
 
-Progress: [████████████████████] 05-01 ✅ | 06-01 ✅
+Progress: [████████████████████] Phase 7 ✅ — v2 complete
 
 ## Active Plans
 
-| ID | Description | Files | Status |
-|----|-------------|-------|--------|
-| 05-01 | Histórico de Registros — lista cronológica + cards expansíveis | `registros.ts`, `History.tsx`, `RegistroCard.tsx` + tests | ✅ Executed |
-| bug-sentimento-opcional | Sentimento deixou de ser obrigatório no formulário | `RegistrationForm.tsx`, `RegistrationForm.test.tsx` | ✅ Fixed |
-| fix-relatorio-contract | Remover periodStart/periodEnd do contrato — backend calcula datas | `report.go` (handler + service), `couchdb.go` | ✅ Executed |
-| **06-01** | **Push Notifications — infra completa (backend + SW + scheduler + UI)** | **9 tasks (ver PLAN.md)** | **✅ Executed** |
+All plans executed. See ROADMAP.md for V3 planned activities.
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Bug fixes: 5 (3 v1 + 2 v2: sentimento opcional + relatório contract)
-- Last activity: 2026-05-17 — Phase 6 planejada
+
+- Total plans completed: 21 (19 phase plans + 2 bugfix plans)
+- Bug fixes: 7 (3 v1 + 4 v2: sentimento opcional, relatório contract, couchdb-jwt-auth, sentimentos-db)
+- Debug sessions resolved: 2 (analise-db-errado, relatorio-400)
+- Last activity: 2026-05-23 — Phase 7 complete + V3 roadmap
 
 **Trend:**
+
 - v1 MVP: ✅ All phases complete
-- v2: Phase 5 ✅ → Phase 6 ✅ (Push Notifications)
+- v2 NLP: ✅ All phases complete (07-01, 07-02, 07-03)
+- v3 Planned: Emotion chips refactor, security audit, WhatsApp integration
 
 ## Decisions
 
@@ -45,8 +60,16 @@ Progress: [████████████████████] 05-01 �
 - **Workflow reforçado** — HARD RULES adicionadas ao AGENTS.md: sem código sem `/approve`, sequência LOCKED, bugs via `/gsd-debug`, verificação S.T.O.P. pré-código
 - **Relatório sem body** — periodStart/periodEnd removidos do contrato. Backend computa: periodStart = último relatório concluído; periodEnd = now
 
+## V3 Roadmap
+
+See ROADMAP.md for full details on Phase 8 — V3 — Integração & Qualidade:
+
+1. **Refatorar emotion chips** — Melhorar visualização dos chips de sentimentos no frontend (RegistroCard) e relatório PDF
+2. **Corrigir vulnerabilidades de segurança** — Auditoria e correção de falhas
+3. **WhatsApp automático** — Cadastro do telefone da psicóloga + envio automático do relatório via WhatsApp ao gerar
+
 ## Session Continuity
 
-Last session: 2026-05-17 — Phase 6 executed
-Branch: feat/06-push-notifications
-Resume with: Próximas features v2 (WhatsApp, NLP, ou ajustes pós-push)
+Last session: 2026-05-23T22:45:00.000Z
+Branch: master
+Resume with: `/gsd-progress` to start V3 work

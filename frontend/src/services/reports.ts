@@ -3,7 +3,7 @@ import type { ReportJob } from '../types'
 
 const API_BASE = import.meta.env.VITE_API_URL
 
-export async function createReport(): Promise<ReportJob> {
+export async function createReport(): Promise<{ jobId: string }> {
   const res = await authenticatedFetch(`${API_BASE}/reports`, {
     method: 'POST',
   })
@@ -25,4 +25,18 @@ export async function getReportsList(): Promise<ReportJob[]> {
 
 export function getDownloadUrl(id: string): string {
   return `${API_BASE}/reports/${encodeURIComponent(id)}/download`
+}
+
+export async function downloadReport(id: string): Promise<void> {
+  const res = await authenticatedFetch(getDownloadUrl(id))
+  if (!res.ok) throw new Error('Falha ao baixar relatório')
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `relatorio-${id}.pdf`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
