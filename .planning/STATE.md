@@ -10,9 +10,10 @@ See: .planning/PROJECT.md (updated 2026-05-17)
 ## Current Position
 
 Phase: 6 — Push Notifications (executado)
-Branch: feat/06-push-notifications
-Status: Phase 5 ✅ | Phase 6 ✅
-Last activity: 2026-05-17 — Phase 6 executed (backend + SW + settings UI + scheduler)
+Milestone: v2 — NLP Analysis (context gathered)
+Branch: master
+Status: Phase 5 ✅ | Phase 6 ✅ | NLP context ✅
+Last activity: 2026-05-23 — NLP context gathered (3 sub-phases: Infra → Modelo → Integração)
 
 Progress: [████████████████████] 05-01 ✅ | 06-01 ✅
 
@@ -47,6 +48,6 @@ Progress: [████████████████████] 05-01 �
 
 ## Session Continuity
 
-Last session: 2026-05-17 — Phase 6 executed
-Branch: feat/06-push-notifications
-Resume with: Próximas features v2 (WhatsApp, NLP, ou ajustes pós-push)
+Last session: 2026-05-23 — NLP context gathered (v2 milestone, 3 sub-phases)
+Branch: master
+Resume with: `/gsd-plan-phase 07-01 --skip-research` para iniciar planejamento da sub-fase 1 (Infra NLP)
