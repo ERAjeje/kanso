@@ -9,13 +9,13 @@ See: .planning/PROJECT.md (updated 2026-05-17)
 
 ## Current Position
 
-Phase: 6 — Push Notifications (executado)
-Milestone: v2 — NLP Analysis (context gathered)
+Phase: 7 — NLP Analysis (07-01 executado)
+Milestone: v2 — NLP Analysis (07-01 complete)
 Branch: master
-Status: Phase 5 ✅ | Phase 6 ✅ | NLP context ✅
-Last activity: 2026-05-23 — NLP context gathered (3 sub-phases: Infra → Modelo → Integração)
+Status: Phase 5 ✅ | Phase 6 ✅ | Phase 7: 07-01 ✅ (Infra NLP) | 07-02 ⏳ | 07-03 ⏳
+Last activity: 2026-05-23 — Phase 07-01 executed: NLP infra scaffold (FastAPI + gRPC + Docker + Go client)
 
-Progress: [████████████████████] 05-01 ✅ | 06-01 ✅
+Progress: [████████████████████] 05-01 ✅ | 06-01 ✅ | 07-01 ✅
 
 ## Active Plans
 
@@ -25,6 +25,7 @@ Progress: [████████████████████] 05-01 �
 | bug-sentimento-opcional | Sentimento deixou de ser obrigatório no formulário | `RegistrationForm.tsx`, `RegistrationForm.test.tsx` | ✅ Fixed |
 | fix-relatorio-contract | Remover periodStart/periodEnd do contrato — backend calcula datas | `report.go` (handler + service), `couchdb.go` | ✅ Executed |
 | **06-01** | **Push Notifications — infra completa (backend + SW + scheduler + UI)** | **9 tasks (ver PLAN.md)** | **✅ Executed** |
+| **07-01** | **Infra NLP — FastAPI + gRPC + Docker + Go client + docker-compose** | **6 tasks** | **✅ Executed** |
 
 ## Performance Metrics
 
@@ -48,6 +49,6 @@ Progress: [████████████████████] 05-01 �
 
 ## Session Continuity
 
-Last session: 2026-05-23 — NLP context gathered (v2 milestone, 3 sub-phases)
+Last session: 2026-05-23 — Phase 07-01 executada (Infra NLP)
 Branch: master
-Resume with: `/gsd-plan-phase 07-01 --skip-research` para iniciar planejamento da sub-fase 1 (Infra NLP)
+Resume with: `/gsd-discuss-phase 07-02` para iniciar discussão da sub-fase 2 (Modelo NLP)

@@ -10,6 +10,9 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - [x] **Phase 2: Core Diary — Registro & Sync** - Emotion registration form, offline-first PouchDB storage, cloud sync
 - [x] **Phase 3: Reports** - PDF report generation with async job infrastructure
 - [x] **Phase 4: Technical Debt & Dev Experience** - Env vars, CORS, Vite proxy, Traefik, Makefile, nlp-service docs
+- [x] **Phase 5: Histórico de Registros** - Chronological registration history with expandable cards
+- [x] **Phase 6: Push Notifications** - FCM push reminders at configurable times
+- [ ] **Phase 7: NLP Analysis** - Emotion analysis via BERTimbau, async pipeline, CouchDB enrichment
 
 ## Phase Details
 
@@ -123,6 +126,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 4. Technical Debt & Dev Experience | 1/1 | Complete | 2026-05-17 |
 | 5. Histórico de Registros | 1/1 | Complete | 2026-05-17 |
 | 6. Push Notifications | 1/1 | Complete | 2026-05-17 |
+| 7. NLP Analysis | 1/3 | In Progress | 07-01 ✅ |
 
 ## Phase 6: Push Notifications
 
@@ -141,4 +145,28 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 **Plans**: 1 plan (single wave)
 **Waves**:
 - **Wave 1** *(Plan 01)* — All tasks: backend push endpoints + FCM service, service worker + permission hook + settings UI, scheduler microservice, tests, infra
+**UI hint**: yes
+
+### Phase 7: NLP Analysis
+
+**Goal**: Registration text (sensações + contexto + pensamentos) is analyzed for emotion patterns, enriching the diary with detected emotions
+**Mode**: standard
+**Depends on**: Phase 2 (registrations), Phase 5 (history)
+**Requirements**: NLP-01, NLP-02, NLP-03
+**Success Criteria** (what must be TRUE):
+  1. New registrations trigger async NLP analysis via CouchDB _changes feed
+  2. Python/FastAPI service analyzes text using BERTimbau fine-tuned for 10-15 Portuguese emotions
+  3. Results stored in separate CouchDB document (`analise:{registroId}`, type: `analise_nlp`)
+  4. Existing registrations are backfilled on first deployment
+  5. Detected emotions appear in History (RegistroCard) and PDF reports
+  6. Analysis never blocks registration — fully async (NLP-03)
+**Plans**: 1/3 sub-phases
+**Sub-phases**:
+- **07-01 — Infra NLP ✅**: Python/FastAPI scaffold, gRPC service, Dockerfile, model download at build time (2026-05-23)
+- **07-02 — Modelo**: BERTimbau fine-tuning, emotion classification pipeline, model validation with Portuguese phrases
+- **07-03 — Integração**: Go _changes listener, CouchDB enrichment, frontend display in RegistroCard + report
+**Waves**:
+- **Wave 1** *(Sub-phase 07-01)* — Python service scaffold + Docker + model download ✅
+- **Wave 2** *(blocked on 07-01)* *(Sub-phase 07-02)* — Model training + classification pipeline
+- **Wave 3** *(blocked on 07-02)* *(Sub-phase 07-03)* — Go integration + frontend display
 **UI hint**: yes

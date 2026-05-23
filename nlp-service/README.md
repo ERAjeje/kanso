@@ -1,29 +1,59 @@
-# NLP Service (v2 — Deferred)
+# NLP Service — Infra NLP (07-01)
 
-This directory is reserved for the NLP analysis service, planned for v2.
-
-## Purpose
-
-Analyze diary entries using natural language processing to detect emotions
-in Portuguese (pt-BR) and enrich registrations with detected emotion tags.
-
-## Planned Stack
-
-- **Python 3.12**
-- **FastAPI** — REST API
-- **transformers** — Pre-trained emotion classification model
-- **Portuguese language model** — e.g., BERTimbau or similar
+Python NLP service for emotion analysis using FastAPI + gRPC.
 
 ## Architecture
 
-The NLP service will be an internal service (not exposed to the frontend).
-The Go backend will call it asynchronously during report generation or
-as a background job when new entries are synced.
+```
+┌──────────────┐    gRPC (internal)    ┌──────────────────┐
+│  Go Backend  │ ───────────────────▶ │  NLP Service     │
+│  (kanso-api) │                      │  (FastAPI+gRPC)  │
+│              │ ◀─────────────────── │                  │
+│  nlp.Client  │    AnalyzeResponse   │  BERTimbau model │
+└──────────────┘                      │  (in image)      │
+                                       └──────────────────┘
+                                                │
+                                       ┌────────▼───────┐
+                                       │  Docker build   │
+                                       │  downloads      │
+                                       │  model to image │
+                                       └─────────────────┘
+```
 
 ## Status
 
-Deferred to v2. The MVP focuses on manual emotion registration with
-user-defined sentiment fields. Automated emotion detection via NLP
-is a future enhancement.
+**Sub-phase 07-01 complete.** The service scaffold is in place:
 
-See: [PROJECT.md](../.planning/PROJECT.md) | [ROADMAP.md](../.planning/ROADMAP.md)
+- gRPC proto definition (`proto/analysis.proto`)
+- FastAPI health endpoint (`/health`)
+- gRPC server with placeholder `AnalysisServicer`
+- Multi-stage Dockerfile with BERTimbau model download at build
+- docker-compose integration (service `nlp`)
+- Go gRPC client stub (`backend/internal/nlp/client.go`)
+
+## Next Steps
+
+- **07-02:** Fine-tune BERTimbau for emotion classification
+- **07-03:** Go _changes listener + CouchDB enrichment + frontend display
+
+## Development
+
+```bash
+# Generate Python gRPC stubs
+bash gen_proto.sh
+
+# Run tests
+python -m pytest tests/ -v
+
+# Start locally
+python -m src
+```
+
+## Docker
+
+```bash
+docker build -t kanso-nlp .
+docker compose -f ../infra/docker-compose.yml up nlp
+```
+
+See: `.planning/PROJECT.md` | `.planning/ROADMAP.md`
