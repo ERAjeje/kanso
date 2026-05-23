@@ -126,7 +126,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 4. Technical Debt & Dev Experience | 1/1 | Complete | 2026-05-17 |
 | 5. Histórico de Registros | 1/1 | Complete | 2026-05-17 |
 | 6. Push Notifications | 1/1 | Complete | 2026-05-17 |
-| 7. NLP Analysis | 4/4 | In Progress | 07-01 ✅, 07-02 ✅ |
+| 7. NLP Analysis | 4/4 | Complete | 07-01 ✅, 07-02 ✅, 07-03 ✅ |
 
 ## Phase 6: Push Notifications
 
@@ -170,14 +170,15 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - [x] 07-02-02-PLAN.md — Training: back-translation augmentation + BERTimbau fine-tuning script ✅
 - [x] 07-02-03-PLAN.md — Inference: classifier pipeline, server integration, validation tests, Dockerfile ✅
 **Plans (07-03)**:
-- [x] 07-03-01-PLAN.md — Repository methods: CouchDB types for _changes, checkpoint, analise docs ✅
-- [x] 07-03-02-PLAN.md — Watcher service: goroutine event loop, gRPC calls, test coverage ✅
-- [x] 07-03-03-PLAN.md — Frontend display: emotion chips in RegistroCard, PouchDB merge ✅
-- [x] 07-03-04-PLAN.md — PDF reports: emotion summary section + per-registro emotions ✅
+- [x] 07-03-01-PLAN.md — Repository methods: CouchDB types for _changes, checkpoint, analise docs ✅ Executed
+- [x] 07-03-02-PLAN.md — Watcher service: goroutine event loop, gRPC calls, test coverage ✅ Executed
+- [x] 07-03-03-PLAN.md — Frontend display: emotion chips in RegistroCard, PouchDB merge ✅ Executed
+- [x] 07-03-04-PLAN.md — PDF reports: emotion summary section + per-registro emotions ✅ Executed
 **Waves**:
 - **Wave 1** *(07-01)* — Python service scaffold + Docker + model download ✅
 - **Wave 2** *(07-02, Plan 01)* — Data pipeline: mappings, curated phrases, config constants ✅
 - **Wave 3** *(07-02, Plans 02+03, parallel)* — Training + inference/validation ✅
-- **Wave 4** *(07-03, Plan 01)* — Repository methods (CouchDB types, _changes, checkpoint)
-- **Wave 5** *(07-03, Plans 02-04, parallel)* — Watcher service + Frontend display + PDF enrichment
+- **Wave 4** *(07-03, Plan 01)* — Repository methods (CouchDB types, _changes, checkpoint) ✅
+- **Wave 5** *(07-03, Plans 02-04, parallel)* — Watcher service + Frontend display + PDF enrichment ✅
 **UI hint**: yes
+**Completed**: 2026-05-23
