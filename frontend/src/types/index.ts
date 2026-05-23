@@ -38,3 +38,26 @@ export interface ReportJob {
   downloadUrl?: string
   errorMessage?: string
 }
+
+export interface EmotionScore {
+  emotion: string
+  score: number
+}
+
+export interface AnaliseNlpDoc {
+  _id: string
+  _rev?: string
+  type: 'analise_nlp'
+  userId: string
+  registroId: string
+  emotionPrincipal: string
+  emotions: EmotionScore[]
+  scores: Record<string, number>
+  intensidade: number
+  modeloVersao: string
+  analisadoEm: string
+}
+
+export interface RegistroWithAnalise extends RegistroDoc {
+  analise?: AnaliseNlpDoc
+}
