@@ -33,11 +33,30 @@
   <p><strong>Total de registros:</strong> {{len .Registros}}</p>
 </div>
 
+{{if .EmotionSummary}}
+<div style="margin-top: 24px; margin-bottom: 24px;">
+  <h2 style="color: #4338ca; font-size: 16pt; margin-top: 0; margin-bottom: 12px;">Resumo das Emoções</h2>
+  {{range .EmotionSummary}}
+  <div style="display: flex; justify-content: space-between; padding: 4px 0; font-size: 11pt; border-bottom: 1px solid #e5e7eb;">
+    <span>{{.Emotion}}</span>
+    <span style="font-weight: bold; color: #4f46e5;">{{.Count}}x</span>
+  </div>
+  {{end}}
+</div>
+{{end}}
+
 {{if .Registros}}
   {{range .Registros}}
   <div class="registro">
     <div class="data">{{.Data}}</div>
     <div class="sentimento">{{.Sentimento}}</div>
+    {{if .Emocoes}}
+    <div style="margin-bottom: 8px;">
+      {{range .Emocoes}}
+      <span style="display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 4px; background: #eef2ff; color: #4f46e5; font-size: 9pt;">{{.Emotion}}</span>
+      {{end}}
+    </div>
+    {{end}}
     <div class="label">Sensações</div>
     <div class="value">{{.Sensacoes}}</div>
     <div class="label">Contexto</div>
