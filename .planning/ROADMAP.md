@@ -160,18 +160,24 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
   4. Existing registrations are backfilled on first deployment
   5. Detected emotions appear in History (RegistroCard) and PDF reports
   6. Analysis never blocks registration — fully async (NLP-03)
-**Plans**: 3 plans (sub-phase 07-02) | Sub-phases: 07-01 ✅ → 07-02 📋 → 07-03 ⬜
+**Plans**: 4 plans | Sub-phases: 07-01 ✅ → 07-02 ✅ → 07-03 📋
 **Sub-phases**:
 - **07-01 — Infra NLP ✅**: Python/FastAPI scaffold, gRPC service, Dockerfile, model download at build time (2026-05-23)
-- **07-02 — Modelo**: BERTimbau fine-tuning, emotion classification pipeline, model validation with Portuguese phrases
-- **07-03 — Integração**: Go _changes listener, CouchDB enrichment, frontend display in RegistroCard + report
+- **07-02 — Modelo ✅**: BERTimbau fine-tuning, emotion classification pipeline, model validation with Portuguese phrases
+- **07-03 — Integração 📋**: Go _changes listener, CouchDB enrichment, frontend display in RegistroCard + report
 **Plans (07-02)**:
 - [x] 07-02-01-PLAN.md — Data pipeline: label mapping, curated phrases, config constants ✅
 - [x] 07-02-02-PLAN.md — Training: back-translation augmentation + BERTimbau fine-tuning script ✅
 - [x] 07-02-03-PLAN.md — Inference: classifier pipeline, server integration, validation tests, Dockerfile ✅
+**Plans (07-03)**:
+- [ ] 07-03-01-PLAN.md — Repository methods: CouchDB types for _changes, checkpoint, analise docs
+- [ ] 07-03-02-PLAN.md — Watcher service: goroutine event loop, gRPC calls, test coverage
+- [ ] 07-03-03-PLAN.md — Frontend display: emotion chips in RegistroCard, PouchDB merge
+- [ ] 07-03-04-PLAN.md — PDF reports: emotion summary section + per-registro emotions
 **Waves**:
 - **Wave 1** *(07-01)* — Python service scaffold + Docker + model download ✅
 - **Wave 2** *(07-02, Plan 01)* — Data pipeline: mappings, curated phrases, config constants ✅
 - **Wave 3** *(07-02, Plans 02+03, parallel)* — Training + inference/validation ✅
-- **Wave 4** *(blocked on 07-02)* *(Sub-phase 07-03)* — Go integration + frontend display
+- **Wave 4** *(07-03, Plan 01)* — Repository methods (CouchDB types, _changes, checkpoint)
+- **Wave 5** *(07-03, Plans 02-04, parallel)* — Watcher service + Frontend display + PDF enrichment
 **UI hint**: yes
