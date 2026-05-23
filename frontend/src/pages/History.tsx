@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getRegistros } from '../services/registros'
 import { RegistroCard } from '../components/RegistroCard'
 import { SyncStatus } from '../components/SyncStatus'
-import type { RegistroDoc, RegistroWithAnalise } from '../types'
+import type { RegistroWithAnalise } from '../types'
 
 export function History() {
   const [registros, setRegistros] = useState<RegistroWithAnalise[]>([])

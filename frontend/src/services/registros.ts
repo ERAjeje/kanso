@@ -48,7 +48,7 @@ export async function getRegistros(): Promise<RegistroWithAnalise[]> {
     }
   }
 
-  return registros.map(r => ({
+  return registros.map((r: RegistroDoc) => ({
     ...r,
     analise: analiseMap.get(r._id),
   }))
