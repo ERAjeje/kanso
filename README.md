@@ -19,25 +19,31 @@ o terapeuta.
 
 ## Funcionalidades
 
-### Implementadas (v1)
+### Implementadas
 
 - **Autenticação Google OAuth** — login com conta Google, JWT com refresh automático
 - **Registro emocional estruturado** — 4 campos: sensações, sentimento (combobox customizável),
   contexto e pensamentos, com data/hora (suporte a registro retroativo)
 - **Offline-first** — dados salvos localmente no PouchDB (IndexedDB), sincronização automática
-  com CouchDB quando online (`live: true, retry: true`)
+  com CouchDB quando online (`live: true, retry: true`) via JWT auth
 - **Combobox de sentimentos** — autocomplete com Headless UI v2, cria novos sentimentos
   automaticamente ao digitar
-- **Navegação por abas** — Registrar, Histórico (placeholder) e Perfil
+- **Histórico cronológico** — lista de registros em ordem reversa com cards expansíveis
+- **Análise NLP de emoções** — watcher em goroutine observa `_changes` feed do CouchDB,
+  envia texto para serviço Python (BERTimbau fine-tuned), resultados salvos como `analise_nlp`
+  no DB `sentimentos` e exibidos como chips coloridos no frontend
 - **Relatórios PDF** — geração assíncrona via chromedp + headless-shell, com polling de status
-  e download autenticado
+  e download autenticado (inclui resumo de emoções + chips por registro)
+- **Notificações push (FCM)** — scheduler Go dispara lembretes nos horários configurados
+  (padrão 12, 18, 23h), preferências sincronizadas via PouchDB
+- **Navegação por abas** — Registrar, Histórico e Perfil (configurações)
 
-### Futuro (v2)
+### Planejado (v3)
 
-- Histórico com busca/filtros
-- Análise NLP de emoções (Python + transformers)
-- Notificações push (FCM)
-- Envio de relatórios via WhatsApp (Twilio)
+- **Refatorar emotion chips** — melhorar visualização no frontend e relatório PDF
+- **Auditoria de segurança** — corrigir vulnerabilidades (CORS, headers, sanitização)
+- **WhatsApp automático** — cadastrar telefone da psicóloga; enviar relatório PDF via
+  WhatsApp ao gerar (Twilio API)
 - Dark mode
 - Bloqueio biométrico/PIN
 
@@ -51,7 +57,8 @@ o terapeuta.
 | Autenticação | Google OAuth + JWT (HS256) | — |
 | Banco de dados | CouchDB | 3.5 |
 | Infraestrutura | Docker Compose + Traefik v3 | — |
-| NLP (futuro) | Python + FastAPI + transformers | — |
+| NLP | Python + FastAPI + gRPC + BERTimbau | 3.12 / 0.115 / 1.69 |
+| Notificações | FCM + Go scheduler | — |
 
 ## Arquitetura
 
@@ -64,15 +71,16 @@ Browser (PWA)
                         Go API (chi)
                           ├── Google OAuth / JWT
                           ├── PDF (chromedp)
-                          ├── FCM (futuro)
+                          ├── NLP Watcher (goroutine)
+                          │   └── gRPC ──→ Python NLP (BERTimbau)
+                          ├── FCM Scheduler
                           └── Twilio (futuro)
-                              ↕
-                    Python NLP (futuro — interno)
 ```
 
 O frontend sincroniza **diretamente** com o CouchDB via PouchDB — o Go backend não participa
-de operações CRUD de registros. O backend lida apenas com autenticação e efeitos colaterais
-(geração de PDF, disparo de notificações, etc.).
+de operações CRUD de registros. O backend lida com autenticação, efeitos colaterais
+(geração de PDF, disparo de notificações, etc.) e o **NLP Watcher** — uma goroutine que
+observa o feed `_changes` do CouchDB e envia novos registros para análise via gRPC.
 
 ## Pré-requisitos
 
@@ -157,17 +165,20 @@ go run ./cmd/kanso-api
 ## Testes
 
 ```bash
+# Todos os testes (via Make)
+make test
+
 # Frontend (Vitest + Testing Library)
 cd frontend && pnpm test
 
 # Backend — testes unitários
 cd backend && go test ./...
 
-# Backend — testes de integração (requer Chrome/headless-shell)
-cd backend && go test ./... -tags=integration
-
 # Backend — verificação de tipos
 cd backend && go vet ./...
+
+# NLP service (Python)
+cd nlp-service && python -m pytest
 ```
 
 ## Estrutura do Projeto
@@ -179,24 +190,30 @@ kanso/
 │   └── internal/
 │       ├── config/config.go    # Variáveis de ambiente
 │       ├── handler/            # Handlers HTTP
-│       ├── service/            # Lógica de negócio
+│       ├── service/            # Lógica de negócio (watcher, report, auth, push)
 │       ├── repository/         # Acesso a dados (CouchDB)
 │       ├── middleware/         # JWT middleware
+│       ├── nlp/                # Cliente gRPC para NLP service
 │       ├── pdf/                # Gerador PDF (chromedp)
 │       └── templates/          # Templates HTML para PDF
 ├── frontend/                   # React PWA
 │   ├── src/
 │   │   ├── components/        # Componentes UI
-│   │   ├── hooks/             # Hooks React (useAuth, usePouchSync)
+│   │   ├── hooks/             # Hooks React (useAuth, usePouchSync, usePushNotifications)
 │   │   ├── pages/             # Páginas (Login, Register, Profile, History)
-│   │   ├── services/          # Serviços (auth, pouchdb, registros, reports)
+│   │   ├── services/          # Serviços (auth, pouchdb, registros, reports, push)
 │   │   └── types/             # TypeScript types
 │   └── vite.config.ts
+├── scheduler/                  # Go scheduler para push notifications (FCM)
+├── nlp-service/                # Python FastAPI + gRPC + BERTimbau
+│   ├── app/                   # FastAPI app
+│   ├── model/                 # Modelo fine-tuned
+│   └── proto/                 # Definições gRPC
 ├── infra/
-│   ├── docker-compose.yml     # CouchDB + API + Traefik
+│   ├── couchdb/local.ini      # Config JWT auth do CouchDB
+│   ├── docker-compose.yml     # CouchDB + API + Traefik + NLP + Scheduler
 │   └── traefik/               # Configuração do Traefik v3
-├── Makefile                   # Comandos unificados (up/down/dev/test)
-├── nlp-service/               # (v2 — análise NLP de emoções)
+├── Makefile                   # Comandos unificados (up/down/dev/test/build)
 ├── .env.example               # Exemplo de variáveis de ambiente
 └── README.md
 ```
@@ -221,6 +238,13 @@ kanso/
 | GET | `/api/reports` | Lista relatórios do usuário |
 | GET | `/api/reports/{id}` | Status de um relatório |
 | GET | `/api/reports/{id}/download` | Download do PDF gerado |
+| POST | `/api/push/subscribe` | Registra subscription FCM + preferências |
+
+### Internas (acesso do scheduler na rede Docker)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/api/push/send` | Dispara notificações push (chamado pelo scheduler) |
 
 ## Variáveis de Ambiente
 
@@ -252,6 +276,7 @@ kanso/
 | `COUCHDB_PASSWORD` | `admin123` | Senha do CouchDB |
 | `JWT_SECRET` | `dev-secret-change-in-production` | Chave JWT |
 | `GOOGLE_CLIENT_ID` | `dev-client-id` | Client ID Google OAuth |
+| `NLP_GRPC_ADDR` | `nlp:50051` | Endereço do serviço NLP (gRPC) |
 
 ---
 
