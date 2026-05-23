@@ -11,3 +11,12 @@ pytest_plugins = ("pytest_asyncio",)
 def labels():
     from src.model_config import LABELS
     return LABELS
+
+
+@pytest.fixture(scope="session")
+def classifier():
+    from src.model_config import MODEL_PATH
+    if not os.path.exists(MODEL_PATH):
+        pytest.skip(f"Model not found at {MODEL_PATH} — run training first")
+    from src.classifier import EmotionClassifier
+    return EmotionClassifier(MODEL_PATH)
