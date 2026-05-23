@@ -107,7 +107,7 @@ func TestWatcher_NoCheckpoint_StartsWithSinceZero(t *testing.T) {
 			return
 		}
 
-		if strings.Contains(r.URL.Path, "checkpoint:nlp_watcher") {
+		if strings.Contains(r.URL.Path, "checkpoint:nlp_watcher") && r.Method == http.MethodGet {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -119,12 +119,9 @@ func TestWatcher_NoCheckpoint_StartsWithSinceZero(t *testing.T) {
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
 	svc := NewWatcherService(couchRepo, &mockAnalyzer{}, &config.Config{})
-
-	// Reduce backoff for fast test
 	svc.backoff = []time.Duration{1 * time.Millisecond, 2 * time.Millisecond, 4 * time.Millisecond}
 	svc.rateLimit = 1 * time.Millisecond
 
-	// Use a custom mock that makes _changes call multiple times
 	svc.Start()
 	time.Sleep(100 * time.Millisecond)
 	svc.Stop()
@@ -305,13 +302,39 @@ func TestWatcher_SkipsDeletedDoc(t *testing.T) {
 
 func TestWatcher_RetriesOnError(t *testing.T) {
 	analyzerCalls := 0
+	changesCallCount := 0
+	saveCh := make(chan struct{}, 1)
 
-	mockCouch := testCouchDBHandler(t,
-		`{"results":[{"seq":"1-abc","id":"reg123","changes":[{"rev":"1-def"}],"doc":{"type":"registro","sensacoes":"test","contexto":"test","pensamentos":"test","dataHora":"2026-05-23T10:00:00Z"}}],"last_seq":"1-abc"}`,
-		http.StatusNotFound, "",
-		nil,
-		func(docJSON string) {},
-	)
+	mockCouch := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		if strings.Contains(r.URL.Path, "_changes") {
+			changesCallCount++
+			if changesCallCount == 1 {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"results":[{"seq":"1-abc","id":"reg123","changes":[{"rev":"1-def"}],"doc":{"type":"registro","sensacoes":"test","contexto":"test","pensamentos":"test","dataHora":"2026-05-23T10:00:00Z"}}],"last_seq":"1-abc"}`))
+			} else {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"results":[],"last_seq":"1-abc"}`))
+			}
+			return
+		}
+
+		if strings.Contains(r.URL.Path, "checkpoint:nlp_watcher") && r.Method == http.MethodGet {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if strings.Contains(r.URL.Path, "checkpoint:nlp_watcher") {
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte(`{"ok":true,"id":"checkpoint:nlp_watcher","rev":"1-abc"}`))
+			select { case saveCh <- struct{}{}: default: }
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"ok":true}`))
+	}))
 	defer mockCouch.Close()
 
 	mockAnalyzer := &mockAnalyzer{
@@ -336,7 +359,14 @@ func TestWatcher_RetriesOnError(t *testing.T) {
 	svc.rateLimit = 1 * time.Millisecond
 
 	svc.Start()
-	time.Sleep(500 * time.Millisecond)
+
+	// Wait for checkpoint save (batch fully processed)
+	select {
+	case <-saveCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for checkpoint save")
+	}
+
 	svc.Stop()
 
 	if analyzerCalls != 3 {
@@ -346,20 +376,39 @@ func TestWatcher_RetriesOnError(t *testing.T) {
 
 func TestWatcher_SkipsAfterRetries(t *testing.T) {
 	analyzerCalls := 0
-	var analiseSaved bool
+	changesCallCount := 0
 	saveCh := make(chan struct{}, 1)
 
-	mockCouch := testCouchDBHandler(t,
-		`{"results":[{"seq":"1-abc","id":"reg123","changes":[{"rev":"1-def"}],"doc":{"type":"registro","sensacoes":"test","contexto":"test","pensamentos":"test","dataHora":"2026-05-23T10:00:00Z"}}],"last_seq":"1-abc"}`,
-		http.StatusNotFound, "",
-		func(seq string) {
-			select {
-			case saveCh <- struct{}{}:
-			default:
+	mockCouch := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		if strings.Contains(r.URL.Path, "_changes") {
+			changesCallCount++
+			if changesCallCount == 1 {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"results":[{"seq":"1-abc","id":"reg123","changes":[{"rev":"1-def"}],"doc":{"type":"registro","sensacoes":"test","contexto":"test","pensamentos":"test","dataHora":"2026-05-23T10:00:00Z"}}],"last_seq":"1-abc"}`))
+			} else {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`{"results":[],"last_seq":"1-abc"}`))
 			}
-		},
-		nil,
-	)
+			return
+		}
+
+		if strings.Contains(r.URL.Path, "checkpoint:nlp_watcher") && r.Method == http.MethodGet {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if strings.Contains(r.URL.Path, "checkpoint:nlp_watcher") {
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte(`{"ok":true,"id":"checkpoint:nlp_watcher","rev":"1-abc"}`))
+			select { case saveCh <- struct{}{}: default: }
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"ok":true}`))
+	}))
 	defer mockCouch.Close()
 
 	alwaysFail := &mockAnalyzer{
@@ -379,16 +428,12 @@ func TestWatcher_SkipsAfterRetries(t *testing.T) {
 	// Wait for checkpoint to be saved (means batch was processed)
 	select {
 	case <-saveCh:
-		// Checkpoint was saved — batch processed
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for checkpoint save")
 	}
 
 	svc.Stop()
 
-	if analiseSaved {
-		t.Error("expected SaveAnalise NOT to be called after all retries failed")
-	}
 	if analyzerCalls != 3 {
 		t.Errorf("expected 3 Analyzer calls (all fail), got %d", analyzerCalls)
 	}
