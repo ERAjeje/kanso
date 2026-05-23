@@ -1,8 +1,28 @@
 import { useState } from 'react'
-import type { RegistroDoc } from '../types'
+import type { RegistroDoc, RegistroWithAnalise } from '../types'
 
 interface Props {
-  registro: RegistroDoc
+  registro: RegistroWithAnalise
+}
+
+const EMOTION_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
+  alegria: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  tristeza: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  raiva: { bg: 'bg-red-100', text: 'text-red-700' },
+  medo: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  nojo: { bg: 'bg-amber-100', text: 'text-amber-700' },
+  surpresa: { bg: 'bg-orange-100', text: 'text-orange-700' },
+  ansiedade: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  vergonha: { bg: 'bg-pink-100', text: 'text-pink-700' },
+  culpa: { bg: 'bg-rose-100', text: 'text-rose-700' },
+  saudade: { bg: 'bg-violet-100', text: 'text-violet-700' },
+  amor: { bg: 'bg-pink-200', text: 'text-pink-800' },
+  gratidão: { bg: 'bg-teal-100', text: 'text-teal-700' },
+  neutro: { bg: 'bg-gray-100', text: 'text-gray-600' },
+}
+
+function getChipColors(emotion: string): { bg: string; text: string } {
+  return EMOTION_CHIP_COLORS[emotion] ?? { bg: 'bg-gray-100', text: 'text-gray-600' }
 }
 
 function formatDate(iso: string): string {
@@ -28,6 +48,7 @@ export function RegistroCard({ registro }: Props) {
   const [expanded, setExpanded] = useState(false)
   const hasSentimento = registro.sentimentoNome && registro.sentimentoNome.trim().length > 0
   const preview = previewText(registro)
+  const analise = registro.analise
 
   return (
     <div
@@ -44,6 +65,23 @@ export function RegistroCard({ registro }: Props) {
             {hasSentimento ? registro.sentimentoNome : 'Buscando sentimento'}
           </h3>
           <p className="text-sm text-gray-500 mt-0.5">{formatDate(registro.dataHora)}</p>
+          {analise && (
+            <div className="flex flex-wrap gap-2 mt-1">
+              <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getChipColors(analise.emotionPrincipal).bg} ${getChipColors(analise.emotionPrincipal).text}`}>
+                {analise.emotionPrincipal}
+              </span>
+              {analise.emotions
+                .filter(e => e.emotion !== analise.emotionPrincipal)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 3)
+                .map(e => (
+                  <span key={e.emotion} className={`text-xs font-semibold px-2 py-1 rounded-full ${getChipColors(e.emotion).bg} ${getChipColors(e.emotion).text}`}>
+                    {e.emotion}
+                  </span>
+                ))
+              }
+            </div>
+          )}
         </div>
         <span className="text-gray-400 ml-2 mt-1 transition-transform duration-200" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
           ▼

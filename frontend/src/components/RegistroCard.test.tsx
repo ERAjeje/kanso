@@ -119,7 +119,10 @@ describe('emotion chips', () => {
   it('shows secondary emotion chips', () => {
     const registro = makeEnrichedRegistro({ _id: '1' })
     render(<RegistroCard registro={registro} />)
-    expect(screen.getByText('ansiedade')).toBeDefined()
+    // ansiedade appears in both heading (sentimentoNome) and chip — use getAllByText
+    const ansiedadeElements = screen.getAllByText('ansiedade')
+    expect(ansiedadeElements.length).toBeGreaterThanOrEqual(2)
+    // medo only appears as secondary chip
     expect(screen.getByText('medo')).toBeDefined()
   })
 
