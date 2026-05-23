@@ -160,13 +160,18 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
   4. Existing registrations are backfilled on first deployment
   5. Detected emotions appear in History (RegistroCard) and PDF reports
   6. Analysis never blocks registration — fully async (NLP-03)
-**Plans**: 1/3 sub-phases
+**Plans**: 3 plans (sub-phase 07-02) | Sub-phases: 07-01 ✅ → 07-02 ⏳ → 07-03 ⬜
 **Sub-phases**:
 - **07-01 — Infra NLP ✅**: Python/FastAPI scaffold, gRPC service, Dockerfile, model download at build time (2026-05-23)
 - **07-02 — Modelo**: BERTimbau fine-tuning, emotion classification pipeline, model validation with Portuguese phrases
 - **07-03 — Integração**: Go _changes listener, CouchDB enrichment, frontend display in RegistroCard + report
+**Plans (07-02)**:
+- [ ] 07-02-01-PLAN.md — Data pipeline: label mapping, curated phrases, config constants
+- [ ] 07-02-02-PLAN.md — Training: back-translation augmentation + BERTimbau fine-tuning script
+- [ ] 07-02-03-PLAN.md — Inference: classifier pipeline, server integration, validation tests, Dockerfile
 **Waves**:
-- **Wave 1** *(Sub-phase 07-01)* — Python service scaffold + Docker + model download ✅
-- **Wave 2** *(blocked on 07-01)* *(Sub-phase 07-02)* — Model training + classification pipeline
-- **Wave 3** *(blocked on 07-02)* *(Sub-phase 07-03)* — Go integration + frontend display
+- **Wave 1** *(07-01)* — Python service scaffold + Docker + model download ✅
+- **Wave 2** *(07-02, Plans 01)* — Data pipeline: mappings, curated phrases, config constants
+- **Wave 3** *(07-02, Plans 02+03, parallel, blocked on Wave 2)* — Training + inference/validation simultaneously
+- **Wave 4** *(blocked on 07-02)* *(Sub-phase 07-03)* — Go integration + frontend display
 **UI hint**: yes
