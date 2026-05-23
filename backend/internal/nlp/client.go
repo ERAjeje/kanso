@@ -9,6 +9,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Analyzer is the interface for NLP analysis, implemented by Client.
+type Analyzer interface {
+	Analyze(ctx context.Context, req *AnalyzeRequest) (*AnalyzeResponse, error)
+}
+
 type Client struct {
 	conn   *grpc.ClientConn
 	client pb.AnalysisServiceClient
