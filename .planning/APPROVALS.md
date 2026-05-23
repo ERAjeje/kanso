@@ -73,3 +73,4 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | Timestamp | Reason | State File |
 |-----------|--------|------------|
 | 2026-05-23 | session_reset | Auto-saved state before /new. Session handoff. NLP context gathered. |
+| 2026-05-23 | session_reset | Auto-saved state before /new. 07-03 context gathered, ready for planning. |

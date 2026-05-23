@@ -552,27 +552,31 @@ def get_model_version() -> str:
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Exact per-label count for curated phrases**
+1. **Exact per-label count for curated phrases** (RESOLVED)
    - What we know: D-22 says ~200-500 per label, 13 labels = 2600-6500 phrases
-   - What's unclear: Whether 200 per minority label is sufficient for the model to learn them (especially saudade, which has no direct GoEmotions equivalent)
-   - Recommendation: Start with 300 per label minimum; plan 1-2 hours of phrase writing
+   - What was unclear: Whether 200 per minority label is sufficient for the model to learn them (especially saudade, which has no direct GoEmotions equivalent)
+   - **Resolution:** Plans 01 starts with ~300 per label minimum (at least 200, aim for 300). D-29 iteration cycle provides corrective mechanism if per-label count is insufficient.
+   - Evidence: Plan 01 Task 2 creates curated_phrases.py with `assert count >= 200` per label.
 
-2. **GoEmotions PT-BR download reliability**
+2. **GoEmotions PT-BR download reliability** (RESOLVED)
    - What we know: The dataset CSV files are publicly accessible via direct download URLs
-   - What's unclear: Whether the `datasets` library can load it directly or if we need to download CSVs manually and parse with pandas
-   - Recommendation: In `train_model.py`, implement a fallback: try `load_dataset()` first, if fails, download CSVs directly via `requests`
+   - What was unclear: Whether the `datasets` library can load it directly or if we need to download CSVs manually and parse with pandas
+   - **Resolution:** Plan 02 implements a dual approach: try `load_dataset()` first, falls back to direct CSV download via `requests` (or `datasets.load_dataset` with streaming). RESEARCH.md confirmed `antoniomenezes/go_emotions_ptbr` is publicly accessible.
+   - Evidence: Plan 02 Task 2 creates `load_goemotions_dataset()` with fallback.
 
-3. **Exact training platform**
+3. **Exact training platform** (RESOLVED)
    - What we know: D-19 says "local dev machine (GPU)"
-   - What's unclear: Whether CUDA/cuDNN, Docker with GPU passthrough, or a dedicated Python venv is available
-   - Recommendation: Write `train_model.py` to auto-detect CUDA (`torch.cuda.is_available()`) and fall back to CPU with a warning
+   - What was unclear: Whether CUDA/cuDNN, Docker with GPU passthrough, or a dedicated Python venv is available
+   - **Resolution:** Plan 02 writes `train_model.py` to auto-detect CUDA (`torch.cuda.is_available()`) and fall back to CPU with a warning. User setup docs note the GPU check step.
+   - Evidence: Plan 02 Task 2 acceptance criteria includes `get_model_version()` and auto CUDA detection; Plan 02 user_setup documents GPU verification step.
 
-4. **ONNX vs raw PyTorch for inference**
+4. **ONNX vs raw PyTorch for inference** (RESOLVED)
    - What we know: BERTimbau base on CPU ~200-500ms with raw PyTorch
-   - What's unclear: Whether ONNX Runtime (via `optimum`) provides meaningful speedup for single-request use case
-   - Recommendation: Defer ONNX to a follow-up optimization. Raw PyTorch with `torch.no_grad()` and `model.eval()` is sufficient for MVP. D-32 confirms no batching needed.
+   - What was unclear: Whether ONNX Runtime (via `optimum`) provides meaningful speedup for single-request use case
+   - **Resolution:** ONNX deferred to follow-up optimization per D-32 (no batching needed for single-user). Plan 03 uses raw PyTorch with `torch.no_grad()` and `model.eval()`.
+   - Evidence: Plan 03 Task 1 creates `classifier.py` with `@torch.no_grad()` and CPU inference; no optimum/onnx dependency in requirements.txt.
 
 ---
 

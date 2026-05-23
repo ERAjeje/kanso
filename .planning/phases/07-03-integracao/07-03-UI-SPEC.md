@@ -52,12 +52,12 @@ All values are multiples of 4 (Tailwind v4 4-point scale). Enforced across all n
 
 | Role | Tailwind | Size | Weight | Line Height | Usage |
 |------|----------|------|--------|-------------|-------|
-| Chip / Label | `text-xs` | 12px | 500 (medium)* | 1.4 | Emotion chip text, field labels (e.g. "Sensações", "Contexto") |
+| Chip / Label | `text-xs` | 12px | 600 (semibold) | 1.4 | Emotion chip text, field labels (e.g. "Sensações", "Contexto") |
 | Body | `text-sm` | 14px | 400 (normal) | 1.5 | Card content, preview text, metadata (date), paragraphs |
 | Subheading | `text-lg` | 18px | 600 (semibold) | 1.3 | Card title (`sentimentoNome` in RegistroCard), section headings |
 | Page heading | `text-2xl` | 24px | 600 (semibold) | 1.2 | Page-level titles |
 
-*\*Weight 500 is an exception for emotion chips and field labels only. The primary declared weights are 400 (body) and 600 (headings).*
+*\*Only 2 primary weights used: 400 (body) and 600 (headings + chips). Consistent across all roles.*
 
 **Font family:** `'Geist Variable', system-ui, -apple-system, sans-serif` (via `@fontsource-variable/geist`). shadcn Nova sets this as default.
 
@@ -84,7 +84,7 @@ All values are multiples of 4 (Tailwind v4 4-point scale). Enforced across all n
 
 ### Emotion Chip Palette (Application-Specific)
 
-Emotion chips use **hardcoded Tailwind utility classes** (not shadcn CSS variables). These 13 emotion-color mappings are defined in `model_config.py` and rendered via an `emotionChipColor(emotion)` mapping function in the frontend. All chips use consistent sizing: `text-xs font-medium px-2 py-1 rounded-full` (with `gap-2` between chips).
+Emotion chips use **hardcoded Tailwind utility classes** (not shadcn CSS variables). These 13 emotion-color mappings are defined in `model_config.py` and rendered via an `emotionChipColor(emotion)` mapping function in the frontend. All chips use consistent sizing: `text-xs font-semibold px-2 py-1 rounded-full` (with `gap-2` between chips).
 
 | Emoção | Background | Text Color | Rationale |
 |--------|-----------|------------|-----------|
@@ -184,11 +184,11 @@ The `getRegistros()` service method returns `RegistroWithAnalise[]`, merging `an
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-05-23

@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config'
+import path from 'path'
 import react from '@vitejs/plugin-react-swc'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -19,6 +20,11 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     host: true,
     port: 5173,
