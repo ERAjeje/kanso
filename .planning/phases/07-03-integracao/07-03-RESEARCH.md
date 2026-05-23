@@ -686,19 +686,22 @@ The `nlp.Client` satisfies this interface. Tests provide a mock implementation.
 | A3 | `analise_nlp` docs auto-sync to the frontend via existing PouchDB live sync | PouchDB merge | Medium — must confirm `createSyncedDB('registros')` includes doc type filtering or not |
 | A4 | The existing PouchDB `allDocs` query returns all doc types including `analise_nlp` | Frontend | Medium — if PouchDB filters by type, would need separate query |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **gRPC connection resilience**
+   - **RESOLVED:** Accepted built-in gRPC reconnection. Watcher is only started if `nlp.NewClient` succeeds (per Issue 3 fix in plan revision). If connection drops mid-operation, gRPC's built-in reconnection handles it. If `NewClient` fails at startup, watcher is not started and NLP processing is skipped until next restart.
    - What we know: `nlp.NewClient` dials once with `grpc.WithBlock()` and 5s timeout. If NLP service is down at startup, `NewClient` returns error.
    - What's unclear: Should watcher handle gRPC reconnect if connection drops mid-operation? `grpc.ClientConn` has built-in reconnection by default.
    - Recommendation: Accept built-in gRPC reconnection. If `NewClient` fails, log warning and the watcher becomes no-op until next restart.
 
 2. **include_docs behavior for deleted docs**
+   - **RESOLVED:** Plan 02's watcher explicitly checks `doc._deleted` first, then `doc.type === "registro"`. Both checks are implemented in the `run()` loop as per the recommendation.
    - What we know: `_changes` includes `_deleted: true` docs. The `doc` field may be minimal.
    - What's unclear: Whether we need explicit `_deleted` check or `doc.type` check is sufficient.
    - Recommendation: Check `doc._deleted` explicitly AND `doc.type === "registro"` before processing. Deleted docs won't have `type` field, but explicit check is safer.
 
 3. **PouchDB merge performance with allDocs**
+   - **RESOLVED:** Plan 03 implements the single `allDocs()` call with in-memory filtering approach as recommended. Performance at user-scale (<1000 docs) is negligible.
    - What we know: `allDocs({ include_docs: true })` returns all docs in the database.
    - What's unclear: Whether fetching both types in one call vs. separate calls is better.
    - Recommendation: Single `allDocs()` call with in-memory filtering. At user-scale (<1000 total docs), performance difference is negligible.
