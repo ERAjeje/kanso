@@ -510,7 +510,7 @@ type PeriodRegistroDoc struct {
 	ID          string `json:"_id,omitempty"`
 	Rev         string `json:"_rev,omitempty"`
 	Type        string `json:"type"`
-	UserSub     string `json:"userSub"`
+	UserSub     string `json:"userId"`
 	DataHora    string `json:"dataHora"`
 	Sensacoes   string `json:"sensacoes"`
 	Sentimento  string `json:"sentimentoNome"`
@@ -608,7 +608,7 @@ func (c *CouchDB) SaveCheckpoint(seq string) error {
 	return c.putDoc("registros", doc.ID, doc)
 }
 
-// SaveAnalise writes an analysis document to the registros database.
+// SaveAnalise writes an analysis document to the sentimentos database.
 // ID format: "analise:{registroId}"
 func (c *CouchDB) SaveAnalise(doc *AnaliseDoc) error {
 	doc.Type = "analise_nlp"
@@ -618,7 +618,7 @@ func (c *CouchDB) SaveAnalise(doc *AnaliseDoc) error {
 	if doc.AnalisadoEm == "" {
 		doc.AnalisadoEm = time.Now().UTC().Format(time.RFC3339)
 	}
-	return c.putDoc("registros", doc.ID, doc)
+	return c.putDoc("sentimentos", doc.ID, doc)
 }
 
 // FindRegistrosByPeriod queries registros for a user between two timestamps.
@@ -627,7 +627,7 @@ func (c *CouchDB) SaveAnalise(doc *AnaliseDoc) error {
 func (c *CouchDB) FindRegistrosByPeriod(userSub, periodStart, periodEnd string) ([]PeriodRegistroDoc, error) {
 	selector := map[string]interface{}{
 		"type":    "registro",
-		"userSub": userSub,
+		"userId": userSub,
 		"dataHora": map[string]interface{}{
 			"$gte": periodStart,
 			"$lte": periodEnd,
@@ -701,7 +701,7 @@ func (c *CouchDB) FindAnaliseByRegistroIds(ids []string) ([]AnaliseDoc, error) {
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/registros/_find", c.baseURL)
+	url := fmt.Sprintf("%s/sentimentos/_find", c.baseURL)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)

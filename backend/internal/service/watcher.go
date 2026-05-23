@@ -14,7 +14,7 @@ import (
 
 // WatcherService watches the registros _changes feed for new registrations,
 // sends them to the NLP service for emotion analysis, and stores results
-// as analise:{registroId} documents in the registros database.
+// as analise:{registroId} documents in the sentimentos database.
 type WatcherService struct {
 	mu        sync.Mutex
 	couchRepo *repository.CouchDB
@@ -68,6 +68,7 @@ func (s *WatcherService) Stop() {
 
 // run is the main watcher event loop. It runs in a goroutine launched by Start().
 func (s *WatcherService) run() {
+	log.Printf("watcher: event loop started")
 	// Determine starting sequence from checkpoint
 	checkpoint, err := s.couchRepo.GetCheckpoint()
 	since := "0"
@@ -96,6 +97,7 @@ func (s *WatcherService) run() {
 			continue
 		}
 
+		processedRegistros := false
 		for i, result := range resp.Results {
 			// Check for stop signal between results
 			select {
@@ -124,6 +126,7 @@ func (s *WatcherService) run() {
 			if docType.Type != "registro" {
 				continue
 			}
+			processedRegistros = true
 
 			// Rate limit between consecutive NLP calls (D-42)
 			if i > 0 {
@@ -191,12 +194,17 @@ func (s *WatcherService) run() {
 			if err := s.couchRepo.SaveAnalise(analiseDoc); err != nil {
 				log.Printf("watcher: failed to save analise for %s: %v", result.ID, err)
 			}
+			processedRegistros = true
 		}
 
-		// Save checkpoint after batch is fully processed (D-40)
+		// Save checkpoint only when registros were actually processed (D-40)
+		// This prevents a tight loop where our own checkpoint writes advance
+		// the seq but never contain actual registro docs.
 		if resp.LastSeq != "" {
-			if err := s.couchRepo.SaveCheckpoint(resp.LastSeq); err != nil {
-				log.Printf("watcher: failed to save checkpoint: %v", err)
+			if processedRegistros {
+				if err := s.couchRepo.SaveCheckpoint(resp.LastSeq); err != nil {
+					log.Printf("watcher: failed to save checkpoint: %v", err)
+				}
 			}
 			since = resp.LastSeq
 		}
