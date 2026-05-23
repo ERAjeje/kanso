@@ -1,3 +1,18 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: "Phase 5 ✅ | Phase 6 ✅ | Phase 7: 07-01 ✅ (Infra NLP) | 07-02 ⏳ | 07-03 ⏳"
+last_updated: "2026-05-23T16:12:40.237Z"
+last_activity: "2026-05-23 — Phase 07-01 executed: NLP infra scaffold (FastAPI + gRPC + Docker + Go client)"
+progress:
+  total_phases: 7
+  completed_phases: 1
+  total_plans: 5
+  completed_plans: 2
+  percent: 14
+---
+
 # Project State
 
 ## Project Reference
@@ -30,11 +45,13 @@ Progress: [████████████████████] 05-01 �
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 9
 - Bug fixes: 5 (3 v1 + 2 v2: sentimento opcional + relatório contract)
 - Last activity: 2026-05-17 — Phase 6 planejada
 
 **Trend:**
+
 - v1 MVP: ✅ All phases complete
 - v2: Phase 5 ✅ → Phase 6 ✅ (Push Notifications)
 
@@ -49,6 +66,6 @@ Progress: [████████████████████] 05-01 �
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 07-01 executada (Infra NLP)
+Last session: 2026-05-23T16:12:40.233Z
 Branch: master
 Resume with: `/gsd-discuss-phase 07-02` para iniciar discussão da sub-fase 2 (Modelo NLP)
