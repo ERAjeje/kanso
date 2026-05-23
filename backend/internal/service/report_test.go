@@ -1,13 +1,16 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/edson/kanso-api/internal/config"
 	"github.com/edson/kanso-api/internal/pdf"
 	"github.com/edson/kanso-api/internal/repository"
+	"github.com/edson/kanso-api/internal/templates"
 )
 
 func setupTestReportService(t *testing.T) (*ReportService, *repository.CouchDB) {
@@ -92,5 +95,105 @@ func TestReportService_MutexProtectsGeneration(t *testing.T) {
 		// All goroutines completed without panic
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for concurrent RequestReport calls")
+	}
+}
+
+func TestReportTemplate_RendersEmotionSummary(t *testing.T) {
+	data := ReportData{
+		GeneratedAt: "23/05/2026 às 10:00 BRT",
+		PeriodStart: "2026-01-01T00:00:00Z",
+		PeriodEnd:   "2026-05-23T10:00:00Z",
+		Registros: []RegistroReportItem{
+			{
+				Data:        "2026-05-23T09:00:00Z",
+				Sentimento:  "ansiedade",
+				Sensacoes:   "coração acelerado",
+				Contexto:    "reunião",
+				Pensamentos: "nervoso",
+				Emocoes: []repository.EmotionScore{
+					{Emotion: "ansiedade", Score: 0.85},
+					{Emotion: "medo", Score: 0.42},
+				},
+			},
+			{
+				Data:        "2026-05-22T14:00:00Z",
+				Sentimento:  "tristeza",
+				Sensacoes:   "cansaço",
+				Contexto:    "casa",
+				Pensamentos: "saudade",
+				Emocoes: []repository.EmotionScore{
+					{Emotion: "tristeza", Score: 0.78},
+					{Emotion: "saudade", Score: 0.65},
+				},
+			},
+		},
+		EmotionSummary: []EmotionSummaryItem{
+			{Emotion: "ansiedade", Count: 1},
+			{Emotion: "medo", Count: 1},
+			{Emotion: "tristeza", Count: 1},
+			{Emotion: "saudade", Count: 1},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := templates.ReportTemplate.Execute(&buf, data); err != nil {
+		t.Fatalf("template execute: %v", err)
+	}
+
+	output := buf.String()
+
+	// Verify emotion summary section
+	if !strings.Contains(output, "Resumo das Emoções") {
+		t.Error("expected emotion summary heading")
+	}
+	if !strings.Contains(output, "ansiedade") {
+		t.Error("expected emotion 'ansiedade' in output")
+	}
+	if !strings.Contains(output, "1x") {
+		t.Error("expected count display")
+	}
+
+	// Verify per-registro emotions
+	if !strings.Contains(output, "medo") {
+		t.Error("expected secondary emotion 'medo' in output")
+	}
+	if !strings.Contains(output, "tristeza") {
+		t.Error("expected emotion 'tristeza' in output")
+	}
+
+	// Verify per-registro chip styling
+	if !strings.Contains(output, "padding: 2px 8px") {
+		t.Error("expected chip inline style")
+	}
+	if !strings.Contains(output, "border-radius: 4px") {
+		t.Error("expected chip border-radius style")
+	}
+
+	// Verify existing content still renders
+	if !strings.Contains(output, "Relatório Kanso") {
+		t.Error("expected report title")
+	}
+	if !strings.Contains(output, "coração acelerado") {
+		t.Error("expected registro content")
+	}
+}
+
+func TestReportTemplate_OmitsEmotionSummaryWhenEmpty(t *testing.T) {
+	data := ReportData{
+		GeneratedAt:    "23/05/2026 às 10:00 BRT",
+		PeriodStart:    "2026-01-01T00:00:00Z",
+		PeriodEnd:      "2026-05-23T10:00:00Z",
+		Registros:      []RegistroReportItem{},
+		EmotionSummary: []EmotionSummaryItem{},
+	}
+
+	var buf bytes.Buffer
+	if err := templates.ReportTemplate.Execute(&buf, data); err != nil {
+		t.Fatalf("template execute: %v", err)
+	}
+
+	output := buf.String()
+	if strings.Contains(output, "Resumo das Emoções") {
+		t.Error("expected NO emotion summary when EmotionSummary is empty")
 	}
 }
