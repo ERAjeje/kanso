@@ -11,6 +11,7 @@ type Config struct {
 	GoogleClienID string
 	PDFTmpDir     string
 	FCMServerKey  string
+	NLPGrpAddr    string
 }
 
 func Load() *Config {
@@ -23,6 +24,7 @@ func Load() *Config {
 		GoogleClienID: getEnv("GOOGLE_CLIENT_ID", ""),
 		PDFTmpDir:     getEnv("PDF_TMP_DIR", "/tmp/kanso-pdf"),
 		FCMServerKey:  getEnv("FCM_SERVER_KEY", ""),
+		NLPGrpAddr:    getEnv("NLP_GRPC_ADDR", "nlp:50051"),
 	}
 }
 

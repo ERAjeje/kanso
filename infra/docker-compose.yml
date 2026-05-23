@@ -91,6 +91,28 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  nlp:
+    build:
+      context: ../nlp-service
+      dockerfile: Dockerfile
+    container_name: kanso-nlp
+    environment:
+      - GRPC_PORT=50051
+      - HTTP_PORT=8000
+    expose:
+      - "50051"
+      - "8000"
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    mem_limit: 4g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   couchdb-data:
   pdf-tmp:
