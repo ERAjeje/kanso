@@ -12,7 +12,8 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - [x] **Phase 4: Technical Debt & Dev Experience** - Env vars, CORS, Vite proxy, Traefik, Makefile, nlp-service docs
 - [x] **Phase 5: Histórico de Registros** - Chronological registration history with expandable cards
 - [x] **Phase 6: Push Notifications** - FCM push reminders at configurable times
-- [ ] **Phase 7: NLP Analysis** - Emotion analysis via BERTimbau, async pipeline, CouchDB enrichment
+- [x] **Phase 7: NLP Analysis** - Emotion analysis via BERTimbau, async pipeline, CouchDB enrichment
+- [ ] **Phase 8: V3 — Integração & Qualidade** - Refinamentos pós-NLP, segurança, WhatsApp
 
 ## Phase Details
 
@@ -127,6 +128,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 5. Histórico de Registros | 1/1 | Complete | 2026-05-17 |
 | 6. Push Notifications | 1/1 | Complete | 2026-05-17 |
 | 7. NLP Analysis | 4/4 | Complete | 07-01 ✅, 07-02 ✅, 07-03 ✅ |
+| 8. V3 — Integração & Qualidade | — | Planned | — |
 
 ## Phase 6: Push Notifications
 
@@ -160,11 +162,11 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
   4. Existing registrations are backfilled on first deployment
   5. Detected emotions appear in History (RegistroCard) and PDF reports
   6. Analysis never blocks registration — fully async (NLP-03)
-**Plans**: 4 plans | Sub-phases: 07-01 ✅ → 07-02 ✅ → 07-03 📋 (planned)
+**Plans**: 4 plans | Sub-phases: 07-01 ✅ → 07-02 ✅ → 07-03 ✅
 **Sub-phases**:
 - **07-01 — Infra NLP ✅**: Python/FastAPI scaffold, gRPC service, Dockerfile, model download at build time (2026-05-23)
 - **07-02 — Modelo ✅**: BERTimbau fine-tuning, emotion classification pipeline, model validation with Portuguese phrases
-- **07-03 — Integração 📋**: Go _changes listener, CouchDB enrichment, frontend display in RegistroCard + report
+- **07-03 — Integração ✅**: Go _changes listener, CouchDB enrichment, frontend display in RegistroCard + report
 **Plans (07-02)**:
 - [x] 07-02-01-PLAN.md — Data pipeline: label mapping, curated phrases, config constants ✅
 - [x] 07-02-02-PLAN.md — Training: back-translation augmentation + BERTimbau fine-tuning script ✅
@@ -182,3 +184,14 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - **Wave 5** *(07-03, Plans 02-04, parallel)* — Watcher service + Frontend display + PDF enrichment ✅
 **UI hint**: yes
 **Completed**: 2026-05-23
+
+### Phase 8: V3 — Integração & Qualidade
+
+**Goal**: Refinar experiência pós-NLP, corrigir vulnerabilidades e integrar WhatsApp para envio automático de relatórios
+**Mode**: standard
+**Depends on**: Phase 7
+**Planned activities**:
+1. **Refatorar emotion chips** — Melhorar visualização dos chips de sentimentos no frontend (RegistroCard) e no relatório PDF
+2. **Corrigir vulnerabilidades de segurança** — Auditoria e correção de falhas (CORS, headers, input sanitization, etc.)
+3. **WhatsApp automático** — Cadastrar telefone da psicóloga no perfil; enviar relatório PDF via WhatsApp ao gerar (Twilio API)
+**UI hint**: yes
