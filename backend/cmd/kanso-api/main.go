@@ -13,6 +13,7 @@ import (
 	"github.com/edson/kanso-api/internal/config"
 	"github.com/edson/kanso-api/internal/handler"
 	"github.com/edson/kanso-api/internal/middleware"
+	"github.com/edson/kanso-api/internal/nlp"
 	"github.com/edson/kanso-api/internal/pdf"
 	"github.com/edson/kanso-api/internal/repository"
 	"github.com/edson/kanso-api/internal/service"
@@ -49,6 +50,15 @@ func main() {
 	reportHandler := handler.NewReportHandler(reportSvc, cfg)
 	pushSvc := service.NewPushService(couchRepo, cfg.FCMServerKey)
 	pushHandler := handler.NewPushHandler(pushSvc)
+
+	// Start NLP watcher if NLP service is available
+	nlpClient, err := nlp.NewClient(cfg.NLPGrpAddr)
+	if err != nil {
+		log.Printf("warning: nlp client not available — watcher not started: %v", err)
+	} else {
+		watcherSvc := service.NewWatcherService(couchRepo, nlpClient, cfg)
+		watcherSvc.Start()
+	}
 
 	ensureCouchDBDatabases(cfg)
 
