@@ -6,13 +6,18 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 ## Pending Approval
 
-*None — all plans approved and executed.*
+*None — all plans approved.*
 
 ---
 
 ## Approved Plans
 
 | Plan ID | Description | Approved At | Executed | 
+| fix-security-p2-01-credenciais | P2-01: CouchDB password hardening | 2026-05-30 | 2026-05-30 |
+| fix-security-p2-02-correcoes-rapidas | P2-02: Correções rápidas | 2026-05-30 | 2026-05-30 |
+| fix-security-p2-03-fcm-v1 | P2-03: FCM HTTP v1 migration | 2026-05-30 | 2026-05-30 |
+| fix-security-p2-04-logging | P2-04: Log sanitization | 2026-05-30 | 2026-05-30 |
+| fix-security-p2-05-arquitetura | P2-05: Decisões arquiteturais | 2026-05-30 | 2026-05-30 |
 | 07-01 | Infra NLP — Python FastAPI/gRPC scaffold, Docker, model download | 2026-05-23 | 2026-05-23 |
 | 07-02-01 | Data pipeline — mappings, curated phrases, config | 2026-05-23 | 2026-05-23 |
 | 07-02-02 | Training — back-translation + BERTimbau fine-tuning | 2026-05-23 | 2026-05-23 |
@@ -32,6 +37,9 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 06-02 | Push preferences via PouchDB sync (offline-first) | 2026-05-17 | 2026-05-17 |
 | fix-couchdb-jwt-auth | Configure CouchDB JWT auth — local.ini, docker-compose mount, _security docs | 2026-05-23 | 2026-05-23 |
 | fix-sentimentos-db | Move analise_nlp do registros DB para sentimentos DB | 2026-05-23 | — |
+| fix-security-p1-01 | P1 Security Hardening — headers, rate limit, CouchDB isolation, JWT validation, dep update, logging, non-root containers | 2026-05-30 | 2026-05-30 |
+| fix-chromedp-separation-01 | Separar chromedp em container dedicado — API roda como appuser, sem seccomp | 2026-05-30 | 2026-05-30 |
+| sec-hardening-01 | Security Hardening — CR-05 + HI-01 + HI-02 + ME-01 | 2026-05-30 | 2026-05-30 |
 
 ---
 
@@ -39,16 +47,33 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 | Plan ID | Description | Status | At |
 |---------|-------------|--------|----|
-| — | — | — | — |
+| 08-01 | Allowlist de emails (config:active_users) | cancelled — escopo alterado | 2026-05-30 |
+| 08-02 | Hardening: headers, chromedp, CouchDB porta, secrets | cancelled — escopo alterado | 2026-05-30 |
+| 08-03 | Push interno, proxy /db, JWT algorithm | cancelled — escopo alterado | 2026-05-30 |
 
 ---
 
 ## Log
 
+| 2026-05-30 | fix-security-p2-01-credenciais | approved | P2-01: CouchDB password hardening — remover fallback admin123 |
+| 2026-05-30 | fix-security-p2-01-credenciais | executed | docker-compose.yml: :-admin123 removido dos 3 serviços, validação obrigatória |
+| 2026-05-30 | fix-security-p2-02-correcoes-rapidas | approved | P2-02: Correções rápidas — NLP subprocess, SW error, console.error, DB constants |
+| 2026-05-30 | fix-security-p2-02-correcoes-rapidas | executed | LO-01: classifier.py sem subprocess. LO-03: SW error com warn. IN-01: console.error→warn. IN-03: DB constants |
+| 2026-05-30 | fix-security-p2-03-fcm-v1 | approved | P2-03: Migrar FCM legacy API para HTTP v1 com OAuth2 |
+| 2026-05-30 | fix-security-p2-03-fcm-v1 | executed | push.go: FCM v1 via OAuth2 + fallback legacy. Config: FCM_PROJECT_ID, FCM_SERVICE_ACCOUNT_B64 |
+| 2026-05-30 | fix-security-p2-04-logging | approved | P2-04: Sanitizar logs do backend — slog estruturado, sem PII |
+| 2026-05-30 | fix-security-p2-04-logging | executed | ~40 log.Printf substituídos por slog estruturado em 6 arquivos Go |
+| 2026-05-30 | fix-security-p2-05-arquitetura | approved | P2-05: Decisões arquiteturais — Docker socket, gRPC TLS, Vite proxy, JWT cookie |
+| 2026-05-30 | fix-security-p2-05-arquitetura | executed | Decisões: HI-01 aceito, HI-02 aceito, ME-01 db-ratelimit no Traefik, ME-05 adiado v4 |
 | 2026-05-23 | fix-couchdb-jwt-auth | approved | PouchDB sync fix — CouchDB JWT auth config + _security docs |
 | 2026-05-23 | fix-couchdb-jwt-auth | executed | infra/couchdb/local.ini + docker-compose mount + _security in main.go |
 | 2026-05-23 | fix-sentimentos-db | approved | Move analise_nlp do registros DB para sentimentos DB |
 | 2026-05-23 | fix-sentimentos-db | executed | couchdb.go + watcher.go + registros.ts — SaveAnalise→sentimentos, FindAnalise→sentimentos/_find, getRegistros→sentimentosDB |
+| 2026-05-30 | fix-security-p0 | approved | P0 security: CR-01 OAuth secret, CR-02 JWT secret, CR-03 CouchDB validate_doc_update, CR-04 push auth |
+| 2026-05-30 | fix-security-p0 | executed | P0 security implemented: JWT secret rotated, validate_doc_update deployed, gitignore for local.ini, push endpoint with JWT admin + API key |
+| 2026-05-30 | fix-security-p1-01 | approved | P1 Security Hardening — headers, rate limit, CouchDB isolation, JWT validation, dep update, logging, non-root containers |
+| 2026-05-30 | fix-chromedp-separation-01 | approved | Separar chromedp em container dedicado — API roda como appuser, sem seccomp |
+| 2026-05-30 | fix-chromedp-separation-01 | executed | Chromedp separation: novo infra/chromedp/Dockerfile, remote allocator, API alpine + appuser, sem seccomp |
 | 2026-05-23 | debug-analise-db-errado | fixed | Docker rebuild + restart + migrate 7 analise docs registros→sentimentos |
 | 2026-05-23 | fix-mango-indexes | fixed | Add Mango indexes on relatorios (type+userSub+createdAt) and registros (type+userSub+dataHora) |
 | 2026-05-23 | fix-frontend-contract-reports | fixed | Align ReportJob type with backend JSON; use downloadReport() with auth instead of <a href> |
@@ -94,3 +119,10 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 |-----------|--------|------------|
 | 2026-05-23 | session_reset | Auto-saved state before /new. Session handoff. NLP context gathered. |
 | 2026-05-23 | session_reset | Auto-saved state before /new. 07-03 context gathered, ready for planning. |
+| 2026-05-30 | 08-01 | cancelled | Phase 8 planos descartados — escopo redefinido pós-auditoria |
+| 2026-05-30 | 08-02 | cancelled | Phase 8 planos descartados — escopo redefinido pós-auditoria |
+| 2026-05-30 | 08-03 | cancelled | Phase 8 planos descartados — escopo redefinido pós-auditoria |
+| 2026-05-30 | sec-hardening | pending | Plano consolidado: CR-05 + HI-01 + HI-02 + ME-01 |
+| 2026-05-30 | sec-hardening-01 | approved | Security Hardening — 4 tasks |
+| 2026-05-30 | sec-hardening-01 | executing | CR-05 chromedp flags → HI-01 Traefik → HI-02 gRPC TLS → ME-01 Vite proxy |
+| 2026-05-30 | sec-hardening-01 | executed | All 4 tasks complete. Builds pass. generator.go limpo, Traefik file provider, gRPC TLS, Vite proxy removido |

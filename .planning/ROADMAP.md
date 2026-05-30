@@ -14,6 +14,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - [x] **Phase 6: Push Notifications** - FCM push reminders at configurable times
 - [x] **Phase 7: NLP Analysis** - Emotion analysis via BERTimbau, async pipeline, CouchDB enrichment
 - [ ] **Phase 8: V3 — Integração & Qualidade** - Refinamentos pós-NLP, segurança, WhatsApp
+- [ ] **Phase 9: Deploy — VPS Hostinger** - Preparação e publicação em produção na Hostinger
 
 ## Phase Details
 
@@ -128,7 +129,8 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 5. Histórico de Registros | 1/1 | Complete | 2026-05-17 |
 | 6. Push Notifications | 1/1 | Complete | 2026-05-17 |
 | 7. NLP Analysis | 4/4 | Complete | 07-01 ✅, 07-02 ✅, 07-03 ✅ |
-| 8. V3 — Integração & Qualidade | — | Planned | — |
+| 8. Security Hardening | 4/4 | ✅ Complete | sec-hardening-01 ✅ |
+| 9. Deploy — VPS Hostinger | — | Planned | — |
 
 ## Phase 6: Push Notifications
 
@@ -185,13 +187,32 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 **UI hint**: yes
 **Completed**: 2026-05-23
 
-### Phase 8: V3 — Integração & Qualidade
+### Phase 8: Security Hardening
 
-**Goal**: Refinar experiência pós-NLP, corrigir vulnerabilidades e integrar WhatsApp para envio automático de relatórios
+**Goal**: Corrigir vulnerabilidades remanescentes do SECURITY-AUDIT.md e fortalecer defesas de borda
 **Mode**: standard
-**Depends on**: Phase 7
+**Depends on**: Phase 7, fix-security-p0, fix-security-p1, fix-security-p2
 **Planned activities**:
-1. **Refatorar emotion chips** — Melhorar visualização dos chips de sentimentos no frontend (RegistroCard) e no relatório PDF
-2. **Corrigir vulnerabilidades de segurança** — Auditoria e correção de falhas (CORS, headers, input sanitization, etc.)
-3. **WhatsApp automático** — Cadastrar telefone da psicóloga no perfil; enviar relatório PDF via WhatsApp ao gerar (Twilio API)
-**UI hint**: yes
+1. **CR-05** — Remover `disable-web-security` + `allow-file-access-from-files` do chromedp PDF generator
+2. **HI-01** — Migrar Traefik de Docker provider para File provider (remover docker.sock)
+3. **HI-02** — Adicionar TLS auto-assinado ao gRPC entre Go API e NLP service
+4. **ME-01** — Remover Vite proxy `/db`; PouchDB sync via Traefik HTTPS com JWT
+**UI hint**: no
+**Status**: ✅ Complete
+**Note**: Emotion chips e WhatsApp movidos para backlog pós-v3
+
+### Phase 9: Deploy — VPS Hostinger
+
+**Goal**: Aplicação publicada e acessível via HTTPS em produção na Hostinger VPS, com CI/CD, domínio configurado, e ambiente de produção seguro
+**Mode**: standard
+**Depends on**: Phase 8 (segurança corrigida), Phase 4 (infra Docker/Traefik)
+**Planned activities**:
+1. **Preparar VPS** — Provisionar servidor Hostinger (Ubuntu), configurar SSH, firewall (UFW), Docker e Docker Compose
+2. **Domínio e SSL** — Configurar domínio (ou subdomínio), DNS apontando para VPS, TLS via Let's Encrypt (Traefik)
+3. **Docker em produção** — Ajustar docker-compose.yml para produção (remover volumes de dev, healthchecks, restart policies, limits de memória)
+4. **CI/CD** — Setup de GitHub Actions (ou similar): build + push para Docker registry + deploy automático na VPS via SSH/docker compose pull
+5. **Variáveis de ambiente** — Configurar .env de produção com secrets reais, gerenciamento de env vars no servidor
+6. **Backup** — Estratégia de backup do CouchDB (dump periódico ou replicação)
+7. **Monitoramento** — Healthchecks, logs centralizados, alertas básicos
+8. **Teste de produção** — Validar fluxo completo (login Google, registro offline, sync, relatório PDF)
+**UI hint**: no
