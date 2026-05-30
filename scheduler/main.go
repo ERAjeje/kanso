@@ -11,11 +11,12 @@ import (
 )
 
 type config struct {
-	couchDBURL  string
-	couchDBUser string
-	couchDBPass string
-	apiURL      string
-	interval    time.Duration
+	couchDBURL      string
+	couchDBUser     string
+	couchDBPass     string
+	apiURL          string
+	schedulerAPIKey string
+	interval        time.Duration
 }
 
 type pushPrefsDoc struct {
@@ -53,11 +54,12 @@ func loadConfig() config {
 	}
 
 	return config{
-		couchDBURL:  getEnv("COUCHDB_URL", "http://couchdb:5984"),
-		couchDBUser: getEnv("COUCHDB_USER", "admin"),
-		couchDBPass: getEnv("COUCHDB_PASSWORD", ""),
-		apiURL:      getEnv("API_URL", "http://api:8080"),
-		interval:    interval,
+		couchDBURL:      getEnv("COUCHDB_URL", "http://couchdb:5984"),
+		couchDBUser:     getEnv("COUCHDB_USER", "admin"),
+		couchDBPass:     getEnv("COUCHDB_PASSWORD", ""),
+		apiURL:          getEnv("API_URL", "http://api:8080"),
+		schedulerAPIKey: getEnv("SCHEDULER_API_KEY", ""),
+		interval:        interval,
 	}
 }
 
@@ -138,6 +140,9 @@ func sendPush(cfg config, userSub string) error {
 		return fmt.Errorf("new request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if cfg.schedulerAPIKey != "" {
+		req.Header.Set("X-API-Key", cfg.schedulerAPIKey)
+	}
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)

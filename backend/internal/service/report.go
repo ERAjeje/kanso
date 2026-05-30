@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -66,7 +66,7 @@ func (s *ReportService) RequestReport(ctx context.Context, sub string) (string, 
 	periodStart := ""
 	last, err := s.couchRepo.GetLastCompletedReport(sub)
 	if err != nil {
-		log.Printf("failed to get last completed report: %v", err)
+		slog.Warn("failed to get last completed report", "error", err)
 	}
 	if last != nil && last.PeriodEnd != "" {
 		periodStart = last.PeriodEnd
@@ -101,7 +101,7 @@ func (s *ReportService) RequestReport(ctx context.Context, sub string) (string, 
 func (s *ReportService) generatePDF(ctx context.Context, jobID, sub, periodStart, periodEnd string) {
 	// Update status to processing
 	if err := s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusProcessing, "", ""); err != nil {
-		log.Printf("failed to update job %s to processing: %v", jobID, err)
+		slog.Warn("failed to update job to processing", "jobID", jobID, "error", err)
 	}
 
 	// Fetch registros for the period
@@ -109,7 +109,7 @@ func (s *ReportService) generatePDF(ctx context.Context, jobID, sub, periodStart
 	if err != nil {
 		errMsg := fmt.Sprintf("fetch registros: %v", err)
 		s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusFailed, "", errMsg)
-		log.Printf("PDF generation failed for job %s: %s", jobID, errMsg)
+		slog.Error("PDF generation failed", "jobID", jobID, "error", errMsg)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (s *ReportService) generatePDF(ctx context.Context, jobID, sub, periodStart
 	if err != nil {
 		errMsg := fmt.Sprintf("fetch analise docs: %v", err)
 		s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusFailed, "", errMsg)
-		log.Printf("PDF generation failed for job %s: %s", jobID, errMsg)
+		slog.Error("PDF generation failed", "jobID", jobID, "error", errMsg)
 		return
 	}
 
@@ -180,7 +180,7 @@ func (s *ReportService) generatePDF(ctx context.Context, jobID, sub, periodStart
 	if err := templates.ReportTemplate.Execute(&htmlBuf, tmplData); err != nil {
 		errMsg := fmt.Sprintf("template execute: %v", err)
 		s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusFailed, "", errMsg)
-		log.Printf("PDF generation failed for job %s: %s", jobID, errMsg)
+		slog.Error("PDF generation failed", "jobID", jobID, "error", errMsg)
 		return
 	}
 
@@ -189,7 +189,7 @@ func (s *ReportService) generatePDF(ctx context.Context, jobID, sub, periodStart
 	if err != nil {
 		errMsg := fmt.Sprintf("pdf generate: %v", err)
 		s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusFailed, "", errMsg)
-		log.Printf("PDF generation failed for job %s: %s", jobID, errMsg)
+		slog.Error("PDF generation failed", "jobID", jobID, "error", errMsg)
 		return
 	}
 
@@ -197,7 +197,7 @@ func (s *ReportService) generatePDF(ctx context.Context, jobID, sub, periodStart
 	if err := os.MkdirAll(s.cfg.PDFTmpDir, 0750); err != nil {
 		errMsg := fmt.Sprintf("mkdir tmp: %v", err)
 		s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusFailed, "", errMsg)
-		log.Printf("PDF generation failed for job %s: %s", jobID, errMsg)
+		slog.Error("PDF generation failed", "jobID", jobID, "error", errMsg)
 		return
 	}
 
@@ -207,13 +207,13 @@ func (s *ReportService) generatePDF(ctx context.Context, jobID, sub, periodStart
 	if err := os.WriteFile(filePath, pdfData, 0640); err != nil {
 		errMsg := fmt.Sprintf("write file: %v", err)
 		s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusFailed, "", errMsg)
-		log.Printf("PDF generation failed for job %s: %s", jobID, errMsg)
+		slog.Error("PDF generation failed", "jobID", jobID, "error", errMsg)
 		return
 	}
 
 	// Update to done
 	if err := s.couchRepo.UpdateReportJobStatus(jobID, "", repository.StatusDone, fileName, ""); err != nil {
-		log.Printf("failed to update job %s to done: %v", jobID, err)
+		slog.Warn("failed to update job to done", "jobID", jobID, "error", err)
 	}
 }
 

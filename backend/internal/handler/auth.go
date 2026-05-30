@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/edson/kanso-api/internal/middleware"
@@ -31,6 +32,10 @@ func (h *AuthHandler) HandleGoogleLogin(w http.ResponseWriter, r *http.Request) 
 
 	claims, err := h.authSvc.VerifyGoogleToken(r.Context(), req.IDToken)
 	if err != nil {
+		slog.Warn("auth: google token verification failed",
+			"ip", r.RemoteAddr,
+			"error", err,
+		)
 		http.Error(w, `{"error":"invalid Google token"}`, http.StatusUnauthorized)
 		return
 	}
@@ -76,9 +81,16 @@ func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
 		return []byte(h.jwtSecret), nil
 	})
 	if err != nil || !token.Valid {
+		slog.Warn("auth: refresh token invalid",
+			"ip", r.RemoteAddr,
+			"error", err,
+		)
 		http.Error(w, `{"error":"invalid refresh token"}`, http.StatusUnauthorized)
 		return
 	}

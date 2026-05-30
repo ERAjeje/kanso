@@ -1,7 +1,7 @@
 import pytest
 import torch
-from src.classifier import EmotionClassifier, get_model_version
-from src.model_config import LABELS, THRESHOLD, NUM_LABELS
+from src.classifier import EmotionClassifier
+from src.model_config import LABELS, THRESHOLD, NUM_LABELS, MODEL_VERSION
 
 
 class TestEmotionClassifierContract:
@@ -51,6 +51,6 @@ class TestEmotionClassifierContract:
         assert result["emotion_principal"] == "neutro"
 
     def test_modelo_versao_string(self, classifier):
-        version = get_model_version()
+        version = MODEL_VERSION
         assert isinstance(version, str)
         assert len(version) > 0

@@ -1,24 +1,9 @@
 import logging
-import subprocess
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from src.model_config import LABELS, NUM_LABELS, THRESHOLD, MODEL_PATH, MAX_LENGTH, MODEL_VERSION
 
 logger = logging.getLogger(__name__)
-
-
-def get_model_version() -> str:
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True,
-            timeout=5,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            return result.stdout.strip()
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
-    return MODEL_VERSION
 
 
 class EmotionClassifier:

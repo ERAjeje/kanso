@@ -2,13 +2,19 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/edson/kanso-api/internal/config"
 	"github.com/edson/kanso-api/internal/handler"
@@ -20,19 +26,19 @@ import (
 )
 
 func ensureCouchDBDatabases(cfg *config.Config) error {
-	dbs := []string{"registros", "sentimentos", "preferencias"}
+	dbs := []string{repository.DBRegistros, repository.DBSentimentos, repository.DBPreferencias, repository.DBRelatorios, repository.DBUsuarios}
 	for _, db := range dbs {
 		url := cfg.CouchDBURL + "/" + db
 		req, _ := http.NewRequest("PUT", url, bytes.NewReader([]byte{}))
 		req.SetBasicAuth(cfg.CouchDBUser, cfg.CouchDBPass)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			log.Printf("warning: could not create database %s: %v", db, err)
+			slog.Warn("could not create database", "db", db, "error", err)
 			continue
 		}
 		resp.Body.Close()
 		if resp.StatusCode == http.StatusCreated {
-			log.Printf("database %s created", db)
+			slog.Info("database created", "db", db)
 		}
 
 		// Allow any authenticated user (via JWT) to sync — req for PouchDB live sync
@@ -43,7 +49,7 @@ func ensureCouchDBDatabases(cfg *config.Config) error {
 		secReq.Header.Set("Content-Type", "application/json")
 		secResp, secErr := http.DefaultClient.Do(secReq)
 		if secErr != nil {
-			log.Printf("warning: could not set security on %s: %v", db, secErr)
+			slog.Warn("could not set security", "db", db, "error", secErr)
 		} else {
 			secResp.Body.Close()
 		}
@@ -57,8 +63,8 @@ func ensureCouchDBIndexes(cfg *config.Config) {
 		name   string
 		fields []string
 	}{
-		{"relatorios", "idx-type-user-createdat", []string{"type", "userSub", "createdAt"}},
-		{"registros", "idx-type-user-datahora", []string{"type", "userId", "dataHora"}},
+		{repository.DBRelatorios, "idx-type-user-createdat", []string{"type", "userSub", "createdAt"}},
+		{repository.DBRegistros, "idx-type-user-datahora", []string{"type", "userId", "dataHora"}},
 	}
 	for _, idx := range indexes {
 		body := `{"index":{"fields":["` +
@@ -70,15 +76,104 @@ func ensureCouchDBIndexes(cfg *config.Config) {
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			log.Printf("warning: could not create index %s on %s: %v", idx.name, idx.db, err)
+			slog.Warn("could not create index", "name", idx.name, "db", idx.db, "error", err)
 			continue
 		}
 		resp.Body.Close()
 		if resp.StatusCode == http.StatusOK {
-			log.Printf("index %s created on %s", idx.name, idx.db)
+			slog.Info("index created", "name", idx.name, "db", idx.db)
 		} else {
-			log.Printf("warning: index %s on %s returned status %d", idx.name, idx.db, resp.StatusCode)
+			slog.Warn("index creation returned unexpected status", "name", idx.name, "db", idx.db, "status", resp.StatusCode)
 		}
+	}
+}
+
+func ensureValidateDocUpdate(cfg *config.Config) {
+	validateFn := `function(newDoc, oldDoc, userCtx, secObj) {
+    if (userCtx.roles.indexOf('_admin') !== -1) { return true; }
+    if (newDoc.type === 'config') { return true; }
+    if (newDoc.userSub && userCtx.name && newDoc.userSub === userCtx.name) { return true; }
+    if (newDoc.userId && userCtx.name && newDoc.userId === userCtx.name) { return true; }
+    if (userCtx.name && newDoc._id === 'user:' + userCtx.name) { return true; }
+    throw({forbidden: 'document access denied'});
+}`
+	ddoc := map[string]interface{}{
+		"_id":                "_design/security",
+		"language":           "javascript",
+		"validate_doc_update": validateFn,
+	}
+	body, _ := json.Marshal(ddoc)
+
+	dbs := []string{repository.DBRegistros, repository.DBSentimentos, repository.DBPreferencias, repository.DBRelatorios, repository.DBUsuarios}
+	for _, db := range dbs {
+		url := cfg.CouchDBURL + "/" + db + "/_design/security"
+		req, _ := http.NewRequest("PUT", url, bytes.NewReader(body))
+		req.SetBasicAuth(cfg.CouchDBUser, cfg.CouchDBPass)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			slog.Warn("could not set validate_doc_update", "db", db, "error", err)
+			continue
+		}
+		resp.Body.Close()
+		if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
+			slog.Info("validate_doc_update deployed", "db", db)
+		} else {
+			slog.Warn("validate_doc_update returned unexpected status", "db", db, "status", resp.StatusCode)
+		}
+	}
+}
+
+func pushAuthMiddleware(jwtSecret []byte, apiKey string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			key := r.Header.Get("X-API-Key")
+			if key != "" && key == apiKey {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+				slog.Warn("push: missing authorization",
+					"path", r.URL.Path,
+					"ip", r.RemoteAddr,
+				)
+				http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+				return
+			}
+
+			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+			token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, jwt.ErrSignatureInvalid
+				}
+				return jwtSecret, nil
+			})
+			if err != nil || !token.Valid {
+				slog.Warn("push: invalid JWT",
+					"path", r.URL.Path,
+					"ip", r.RemoteAddr,
+					"error", err,
+				)
+				http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+				return
+			}
+
+			claims := token.Claims.(jwt.MapClaims)
+			role, _ := claims["role"].(string)
+			if role != "admin" {
+				slog.Warn("push: not admin role",
+					"path", r.URL.Path,
+					"ip", r.RemoteAddr,
+				)
+				http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), middleware.UserContextKey, claims)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 }
 
@@ -89,24 +184,34 @@ func main() {
 	authSvc := service.NewAuth(cfg.GoogleClienID, cfg.JWTSecret, couchRepo)
 	authHandler := handler.NewAuth(authSvc, cfg.JWTSecret)
 
-	pdfGen := pdf.NewGenerator("", 30*time.Second)
+	chromedpURL := os.Getenv("CHROMEDP_WS_URL")
+	var pdfGen *pdf.Generator
+	if chromedpURL != "" {
+		pdfGen = pdf.NewRemoteGenerator(chromedpURL, 30*time.Second)
+		slog.Info("pdf: using remote chromedp", "url", chromedpURL)
+	} else {
+		pdfGen = pdf.NewGenerator("", 30*time.Second)
+		slog.Info("pdf: using local chromedp")
+	}
 	reportSvc := service.NewReportService(couchRepo, pdfGen, cfg)
 	reportHandler := handler.NewReportHandler(reportSvc, cfg)
-	pushSvc := service.NewPushService(couchRepo, cfg.FCMServerKey)
+	pushSvc := service.NewPushService(couchRepo, cfg.FCMServerKey, cfg.FCMProjectID, cfg.FCMServiceAccountB64)
 	pushHandler := handler.NewPushHandler(pushSvc)
 
 	// Start NLP watcher if NLP service is available
-	nlpClient, err := nlp.NewClient(cfg.NLPGrpAddr)
+	grpcCACert := os.Getenv("GRPC_CA_CERT")
+	nlpClient, err := nlp.NewClient(cfg.NLPGrpAddr, grpcCACert)
 	if err != nil {
-		log.Printf("warning: nlp client not available — watcher not started: %v", err)
+		slog.Warn("nlp client not available — watcher not started", "error", err)
 	} else {
 		watcherSvc := service.NewWatcherService(couchRepo, nlpClient, cfg)
 		watcherSvc.Start()
-		log.Printf("watcher: NLP watcher started (addr=%s)", cfg.NLPGrpAddr)
+		slog.Info("NLP watcher started", "addr", cfg.NLPGrpAddr)
 	}
 
 	ensureCouchDBDatabases(cfg)
 	ensureCouchDBIndexes(cfg)
+	ensureValidateDocUpdate(cfg)
 
 	r := chi.NewRouter()
 	r.Use(chimiddleware.Logger)
@@ -136,9 +241,9 @@ func main() {
 		r.Post("/api/push/subscribe", pushHandler.HandleSubscribe)
 	})
 
-	// Internal routes (scheduler access only — on Docker internal network)
-	r.Post("/api/push/send", pushHandler.HandleSend)
+	// Push send — JWT admin role OR scheduler API key
+	r.With(pushAuthMiddleware([]byte(cfg.JWTSecret), cfg.SchedulerAPIKey)).Post("/api/push/send", pushHandler.HandleSend)
 
-	log.Printf("Starting server on :%s", cfg.Port)
+	slog.Info("starting server", "port", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))
 }

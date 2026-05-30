@@ -57,7 +57,7 @@ export function Login() {
       await signIn(response.credential)
       navigate('/register', { replace: true })
     } catch (err) {
-      console.error('Login failed:', err)
+      console.warn('Login failed:', err)
     }
   }, [signIn, navigate])
 

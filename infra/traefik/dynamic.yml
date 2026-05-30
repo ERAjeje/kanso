@@ -4,8 +4,93 @@ tls:
       keyFile: /etc/traefik/certs/kanso.local-key.pem
 
 http:
+  routers:
+    api:
+      rule: "Host(`kanso.local`) && PathPrefix(`/api`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: api
+      middlewares:
+        - auth-ratelimit
+        - secHeaders
+        - cors-headers
+
+    couchdb:
+      rule: "Host(`kanso.local`) && PathPrefix(`/db`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: couchdb
+      middlewares:
+        - couchdb-strip
+        - secHeaders
+        - db-ratelimit
+        - cors-headers
+
+  services:
+    api:
+      loadBalancer:
+        servers:
+          - url: "http://api:8080"
+
+    couchdb:
+      loadBalancer:
+        servers:
+          - url: "http://couchdb:5984"
+
   middlewares:
+    couchdb-strip:
+      stripPrefix:
+        prefixes:
+          - "/db"
+
+    cors-headers:
+      headers:
+        accessControlAllowOriginList:
+          - "http://localhost:5173"
+          - "https://kanso.local"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+        accessControlAllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+        accessControlAllowCredentials: true
+
+
+    secHeaders:
+      headers:
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' https://accounts.google.com https://accounts.google.com/gsi/ https://www.googleapis.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; frame-src https://accounts.google.com; connect-src 'self' https://accounts.google.com; img-src 'self' data:; font-src 'self' data:"
+        strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customFrameOptionsValue: "DENY"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=()"
+
     redirect-https:
       redirectScheme:
         scheme: https
         permanent: true
+
+    auth-ratelimit:
+      rateLimit:
+        average: 10
+        burst: 20
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    db-ratelimit:
+      rateLimit:
+        average: 30
+        burst: 60
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1

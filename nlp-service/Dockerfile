@@ -10,13 +10,16 @@ RUN python download_model.py
 
 FROM python:3.12-slim AS runtime
 
+RUN adduser --disabled-password --gecos '' appuser
 WORKDIR /app
 COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=build /model /model
 
 COPY src/ ./src/
 COPY proto/ ./proto/
+RUN chown -R appuser:appuser /app /model
 
+USER appuser
 ENV MODEL_PATH=/model
 
 EXPOSE 8000 50051

@@ -1,9 +1,15 @@
 # Kanso Infrastructure — Docker Compose
-# Provides CouchDB and the API service with chromedp PDF generation support.
+# Provides CouchDB, chromedp (headless PDF rendering), and the Go API service.
+#
+# Architecture:
+# - chromedp runs in its own container (kanso-chromedp) with --remote-debugging-port
+# - API connects to chromedp via CDP WebSocket (no chromedp binary in API container)
+# - This allows the API container to run as non-root user
 #
 # Security:
 # - CouchDB admin password set via COUCHDB_PASSWORD env
-# - chromedp/headless-shell requires seccomp=unconfined (chrome needs clone/fork)
+# - chromedp/headless-shell isolated in its own container with seccomp=unconfined
+# - API container runs as non-root (appuser) without seccomp exceptions
 # - Memory limits prevent resource exhaustion
 
 services:
@@ -14,7 +20,6 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik:/etc/traefik
       - ./traefik/certs:/etc/traefik/certs
     restart: unless-stopped
@@ -24,9 +29,9 @@ services:
     container_name: kanso-couchdb
     environment:
       - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
-    ports:
-      - "5984:5984"
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:?COUCHDB_PASSWORD is required — set in .env or environment}
+    # Port 5984 intentionally NOT exposed to host — access via Traefik proxy /db only
+    # Internal Docker network access: couchdb:5984 (for API, scheduler, NLP)
     volumes:
       - couchdb-data:/opt/couchdb/data
       - ./couchdb/local.ini:/opt/couchdb/etc/local.d/10-jwt-auth.ini
@@ -37,14 +42,26 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.couchdb.rule=Host(`kanso.local`) && PathPrefix(`/db`)"
-      - "traefik.http.routers.couchdb.entrypoints=websecure"
-      - "traefik.http.routers.couchdb.tls=true"
-      - "traefik.http.services.couchdb.loadbalancer.server.port=5984"
-      - "traefik.http.routers.couchdb.middlewares=couchdb-strip"
-      - "traefik.http.middlewares.couchdb-strip.stripprefix.prefixes=/db"
+    depends_on:
+      traefik:
+        condition: service_started
+
+  chromedp:
+    build:
+      context: ./chromedp
+      dockerfile: Dockerfile
+    container_name: kanso-chromedp
+    expose:
+      - "9222"
+    mem_limit: 512m
+    restart: unless-stopped
+    security_opt:
+      - seccomp=unconfined
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9222/json/version"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
@@ -55,26 +72,22 @@ services:
     environment:
       - COUCHDB_URL=http://couchdb:5984
       - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
-      - PDF_TMP_DIR=/tmp/kanso-pdf
-      - CHROMEDP_PATH=/headless-shell/headless-shell
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:?COUCHDB_PASSWORD is required — set in .env or environment}
+      - CHROMEDP_WS_URL=http://chromedp:9222
+      - GRPC_CA_CERT=/certs/ca.crt
+    volumes:
+      - grpc-certs:/certs:ro
     ports:
       - "8080:8080"
     depends_on:
       couchdb:
         condition: service_healthy
-    volumes:
-      - pdf-tmp:/tmp/kanso-pdf
-    mem_limit: 2g
-    security_opt:
-      - seccomp=unconfined
+      chromedp:
+        condition: service_healthy
+      traefik:
+        condition: service_started
+    mem_limit: 256m
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`kanso.local`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls=true"
-      - "traefik.http.services.api.loadbalancer.server.port=8080"
 
   scheduler:
     build:
@@ -85,8 +98,9 @@ services:
     environment:
       - COUCHDB_URL=http://couchdb:5984
       - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-admin123}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:?COUCHDB_PASSWORD is required — set in .env or environment}
       - API_URL=http://api:8080
+      - SCHEDULER_API_KEY=${SCHEDULER_API_KEY}
     depends_on:
       couchdb:
         condition: service_healthy
@@ -102,9 +116,12 @@ services:
     environment:
       - GRPC_PORT=50051
       - HTTP_PORT=8000
+      - GRPC_CERT_DIR=/certs
     expose:
       - "50051"
       - "8000"
+    volumes:
+      - grpc-certs:/certs:ro
     depends_on:
       couchdb:
         condition: service_healthy
@@ -118,4 +135,9 @@ services:
 
 volumes:
   couchdb-data:
-  pdf-tmp:
+  grpc-certs:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./certs
+      o: bind

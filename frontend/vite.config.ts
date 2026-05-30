@@ -33,11 +33,6 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
-      '/db': {
-        target: 'http://localhost:5984',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/db/, ''),
-      },
     },
   },
   optimizeDeps: {

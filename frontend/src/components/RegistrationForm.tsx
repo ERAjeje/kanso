@@ -52,7 +52,7 @@ export function RegistrationForm({ onSaved, onShowToast }: Props) {
 
       onSaved()
     } catch (err) {
-      console.error('Failed to save:', err)
+      console.warn('Failed to save:', err)
       setError('Não foi possível salvar o registro. Verifique sua conexão e tente novamente.')
     } finally {
       setSaving(false)

@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -30,7 +30,7 @@ func (h *ReportHandler) HandleRequestReport(w http.ResponseWriter, r *http.Reque
 
 	jobID, err := h.svc.RequestReport(r.Context(), sub)
 	if err != nil {
-		log.Printf("failed to request report: %v", err)
+		slog.Warn("failed to request report", "error", err)
 		http.Error(w, `{"error":"failed to create report job"}`, http.StatusInternalServerError)
 		return
 	}
@@ -48,7 +48,7 @@ func (h *ReportHandler) HandleListReports(w http.ResponseWriter, r *http.Request
 
 	jobs, err := h.svc.GetJobs(r.Context(), sub)
 	if err != nil {
-		log.Printf("failed to list reports: %v", err)
+		slog.Warn("failed to list reports", "error", err)
 		http.Error(w, `{"error":"failed to list reports"}`, http.StatusInternalServerError)
 		return
 	}
@@ -66,7 +66,7 @@ func (h *ReportHandler) HandleGetReport(w http.ResponseWriter, r *http.Request) 
 
 	job, err := h.svc.GetJob(r.Context(), jobID, sub)
 	if err != nil {
-		log.Printf("failed to get report: %v", err)
+		slog.Warn("failed to get report", "error", err)
 		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +88,7 @@ func (h *ReportHandler) HandleDownload(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.svc.GetPDF(r.Context(), jobID, sub)
 	if err != nil {
-		log.Printf("failed to get PDF: %v", err)
+		slog.Warn("failed to get PDF", "error", err)
 		http.Error(w, `{"error":"failed to get PDF"}`, http.StatusInternalServerError)
 		return
 	}

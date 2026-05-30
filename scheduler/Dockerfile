@@ -8,4 +8,6 @@ RUN CGO_ENABLED=0 go build -o /kanso-scheduler .
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates
 COPY --from=build /kanso-scheduler /usr/local/bin/
+RUN adduser -D -g '' appuser
+USER appuser
 CMD ["/usr/local/bin/kanso-scheduler"]
