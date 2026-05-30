@@ -6,11 +6,11 @@ milestone_name: nlp-analysis
 last_updated: "2026-05-30T19:20:00.000Z"
 last_activity: "2026-05-30 — sec-hardening-01 executed + chromedp fix (Host header) + Traefik HSTS fix + Vite proxy /db readicionado para dev"
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 8
-    total_plans: 22
+    total_plans: 23
     completed_plans: 22
-    percent: 89
+    percent: 88
 ---
 
 # Project State
@@ -30,11 +30,14 @@ Branch: master
 Status: Phase 8 ✅ | Security hardening + bugfixes
 Last activity: 2026-05-30 — chromedp Host header fix + Traefik HSTS field + Vite proxy /db
 
-Progress: [████████████████████████] Phase 8 ✅
+Progress: [████████████████████████] Phase 8 ✅ | Phase 09 ✅ Approved · Executing | Phase 10 📋 Pending approval
 
 ## Active Plans
 
-All plans executed. Ready for next phase (Phase 9 — Deploy).
+| Plan ID | Status | Description |
+|---------|--------|-------------|
+| 09-deploy-vps | Executed (scripts + configs criados) | Deploy VPS Hostinger — pendente: execução manual na VPS | ✅ |
+| 10-sentiment-training | Pending approval | Sentiment Training — edição no History, coleta de dados, batch retraining, re-análise lazy |
 
 ## Performance Metrics
 

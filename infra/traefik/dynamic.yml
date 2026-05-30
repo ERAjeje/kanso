@@ -6,32 +6,23 @@ tls:
 http:
   routers:
     api:
-      rule: "Host(`kanso.local`) && PathPrefix(`/api`)"
+      rule: "Host(`kanso.edsonajeje.cloud`) && PathPrefix(`/api`)"
       entrypoints:
         - websecure
-      tls: {}
+      tls:
+        certResolver: letsencrypt
       service: api
       middlewares:
         - auth-ratelimit
         - secHeaders
         - cors-headers
 
-    couchdb-http:
-      rule: "(Host(`kanso.local`) || Host(`localhost`)) && PathPrefix(`/db`)"
-      entrypoints:
-        - web
-      service: couchdb
-      middlewares:
-        - couchdb-strip
-        - secHeaders
-        - db-ratelimit
-        - cors-headers
-
     couchdb:
-      rule: "(Host(`kanso.local`) || Host(`localhost`)) && PathPrefix(`/db`)"
+      rule: "Host(`kanso.edsonajeje.cloud`) && PathPrefix(`/db`)"
       entrypoints:
         - websecure
-      tls: {}
+      tls:
+        certResolver: letsencrypt
       service: couchdb
       middlewares:
         - couchdb-strip
@@ -59,8 +50,7 @@ http:
     cors-headers:
       headers:
         accessControlAllowOriginList:
-          - "http://localhost:5173"
-          - "https://kanso.local"
+          - "https://kanso.edsonajeje.cloud"
         accessControlAllowMethods:
           - "GET"
           - "POST"
@@ -71,7 +61,6 @@ http:
           - "Authorization"
           - "Content-Type"
         accessControlAllowCredentials: true
-
 
     secHeaders:
       headers:
@@ -84,11 +73,6 @@ http:
         referrerPolicy: "strict-origin-when-cross-origin"
         customFrameOptionsValue: "DENY"
         permissionsPolicy: "camera=(), microphone=(), geolocation=()"
-
-    redirect-https:
-      redirectScheme:
-        scheme: https
-        permanent: true
 
     auth-ratelimit:
       rateLimit:

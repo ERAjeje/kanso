@@ -6,13 +6,16 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 ## Pending Approval
 
-*None — all plans approved.*
+| Plan ID | Description | Created |
+|---------|-------------|---------|
+| 10-sentiment-training | Sentiment Training — edição no History, coleta de dados, batch retraining, re-análise lazy | 2026-05-30 |
 
 ---
 
 ## Approved Plans
 
-| Plan ID | Description | Approved At | Executed | 
+| Plan ID | Description | Approved At | Executed |
+| 09-deploy-vps | Deploy VPS Hostinger — DNS, Traefik/Let's Encrypt, docker-compose produção, backup, deploy script | 2026-05-30 | — | 
 | fix-security-p2-01-credenciais | P2-01: CouchDB password hardening | 2026-05-30 | 2026-05-30 |
 | fix-security-p2-02-correcoes-rapidas | P2-02: Correções rápidas | 2026-05-30 | 2026-05-30 |
 | fix-security-p2-03-fcm-v1 | P2-03: FCM HTTP v1 migration | 2026-05-30 | 2026-05-30 |

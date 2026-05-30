@@ -15,6 +15,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 - [x] **Phase 7: NLP Analysis** - Emotion analysis via BERTimbau, async pipeline, CouchDB enrichment
 - [ ] **Phase 8: V3 — Integração & Qualidade** - Refinamentos pós-NLP, segurança, WhatsApp
 - [ ] **Phase 9: Deploy — VPS Hostinger** - Preparação e publicação em produção na Hostinger
+- [ ] **Phase 10: Sentiment Training** — Edição de sentimento no History com as 13 emoções + coleta de dados de treinamento + batch retraining + re-análise lazy
 
 ## Phase Details
 
@@ -130,7 +131,8 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 | 6. Push Notifications | 1/1 | Complete | 2026-05-17 |
 | 7. NLP Analysis | 4/4 | Complete | 07-01 ✅, 07-02 ✅, 07-03 ✅ |
 | 8. Security Hardening | 4/4 | ✅ Complete | sec-hardening-01 ✅ |
-| 9. Deploy — VPS Hostinger | — | Planned | — |
+| 9. Deploy — VPS Hostinger | 1/1 | In Progress | 2026-05-30 |
+| 10. Sentiment Training | — | Planned | — |
 
 ## Phase 6: Push Notifications
 
@@ -202,10 +204,32 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 **Fixes pós-execução**: chromedp Host header (DNS rebinding), Traefik `strictTransportSecurity` → `stsSeconds`, Vite proxy `/db` readicionado para dev
 **Note**: Emotion chips e WhatsApp movidos para backlog pós-v3
 
+### Phase 10: Sentiment Training
+
+**Goal**: Usuário pode editar o sentimento de registros não preenchidos diretamente no History, usando as 13 emoções do modelo NLP. Ao salvar, o par `(texto, label)` é coletado como dado de treinamento. Um pipeline de batch retraining com detecção de mudança permite re-treinar o modelo periodicamente, com re-análise lazy dos registros existentes.
+
+**Mode**: standard
+**Depends on**: Phase 7 (NLP Analysis)
+**Requirements**: NLP-01, NLP-02, NLP-03, REG-01
+**Success Criteria** (what must be TRUE):
+1. Registro sem sentimento exibe SentimentoEditor no card expandido do History
+2. Registro com sentimento exibe texto estático — edição bloqueada
+3. Ao salvar, o registro é atualizado no PouchDB + CouchDB e o training example é salvo no DB `treinamento`
+4. POST /api/train verifica hash da base e só retreina se houver mudança
+5. NLP Service aceita dados do CouchDB `treinamento` como fonte adicional de treinamento
+6. Re-análise é lazy — só re-processa registros com versão desatualizada quando requisitada
+7. Frases curadas migradas do código Python para o CouchDB `treinamento`
+**Plans**: 1 plan (10-PLAN.md) | 4 waves — 13 tasks
+**Waves**:
+- **Wave 1** — Training Database & Pipeline: types, service, change detection, CouchDB migration, train_model update
+- **Wave 2** — Frontend: SentimentoEditor component, RegistroCard edit mode, History refresh
+- **Wave 3** — Backend: /api/train endpoint, NLP /train endpoint, lazy re-analysis
+- **Wave 4** — Infra: CouchDB treinamento database setup, scheduler (opcional)
+**UI hint**: yes
+
 ### Phase 9: Deploy — VPS Hostinger
 
 **Goal**: Aplicação publicada e acessível via HTTPS em produção na Hostinger VPS, com CI/CD, domínio configurado, e ambiente de produção seguro
-**Mode**: standard
 **Depends on**: Phase 8 (segurança corrigida), Phase 4 (infra Docker/Traefik)
 **Planned activities**:
 1. **Preparar VPS** — Provisionar servidor Hostinger (Ubuntu), configurar SSH, firewall (UFW), Docker e Docker Compose

@@ -10,10 +10,12 @@ scheduler/kanso-scheduler
 *.log
 .secrets/
 
-# --- Infrastructure Certs ---
+# --- Infrastructure Certs & Secrets ---
 infra/couchdb/local.ini
 infra/certs/
 infra/traefik/certs/
+infra/traefik/acme.json
+infra/.env.production
 
 # --- Private Keys (catch-all) ---
 *.key
