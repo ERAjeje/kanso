@@ -199,6 +199,7 @@ Kanso is an offline-first therapeutic emotion diary PWA that helps users name an
 4. **ME-01** — Remover Vite proxy `/db`; PouchDB sync via Traefik HTTPS com JWT
 **UI hint**: no
 **Status**: ✅ Complete
+**Fixes pós-execução**: chromedp Host header (DNS rebinding), Traefik `strictTransportSecurity` → `stsSeconds`, Vite proxy `/db` readicionado para dev
 **Note**: Emotion chips e WhatsApp movidos para backlog pós-v3
 
 ### Phase 9: Deploy — VPS Hostinger

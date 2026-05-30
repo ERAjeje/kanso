@@ -58,7 +58,7 @@ services:
     security_opt:
       - seccomp=unconfined
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9222/json/version"]
+      test: ["CMD-SHELL", "socat /dev/null TCP4:localhost:9222,connect-timeout=3"]
       interval: 15s
       timeout: 5s
       retries: 5

@@ -16,8 +16,19 @@ http:
         - secHeaders
         - cors-headers
 
+    couchdb-http:
+      rule: "(Host(`kanso.local`) || Host(`localhost`)) && PathPrefix(`/db`)"
+      entrypoints:
+        - web
+      service: couchdb
+      middlewares:
+        - couchdb-strip
+        - secHeaders
+        - db-ratelimit
+        - cors-headers
+
     couchdb:
-      rule: "Host(`kanso.local`) && PathPrefix(`/db`)"
+      rule: "(Host(`kanso.local`) || Host(`localhost`)) && PathPrefix(`/db`)"
       entrypoints:
         - websecure
       tls: {}
@@ -65,7 +76,9 @@ http:
     secHeaders:
       headers:
         contentSecurityPolicy: "default-src 'self'; script-src 'self' https://accounts.google.com https://accounts.google.com/gsi/ https://www.googleapis.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; frame-src https://accounts.google.com; connect-src 'self' https://accounts.google.com; img-src 'self' data:; font-src 'self' data:"
-        strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
         contentTypeNosniff: true
         browserXssFilter: true
         referrerPolicy: "strict-origin-when-cross-origin"

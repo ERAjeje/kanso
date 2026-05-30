@@ -37,7 +37,7 @@ o terapeuta.
 - **Notificações push (FCM v1)** — scheduler Go dispara lembretes nos horários configurados,
   autenticação via OAuth2 com service account
 - **Navegação por abas** — Registrar, Histórico e Perfil (configurações)
-- **Segurança** — auditoria completa com 19/24 itens corrigidos:
+-   **Segurança** — auditoria completa com 19/24 itens corrigidos:
   - `validate_doc_update` para isolamento de dados por usuário no CouchDB (CR-03)
   - JWT secret forte (256-bit) + validação de algoritmo HMAC (CR-02, ME-03)
   - Push endpoint autenticado via API key + JWT admin (CR-04)
@@ -50,7 +50,6 @@ o terapeuta.
   - Database names como constantes (IN-03)
   - Chromedp sem flags inseguras (CR-05)
   - Rate limiting via Traefik (10 req/min auth, 30 req/min db)
-  - Vite proxy `/db` removido — PouchDB sync via Traefik HTTPS (ME-01)
 
 ### Planejado (backlog)
 
@@ -81,19 +80,21 @@ o terapeuta.
 Browser (PWA)
   ├── React (UI)
   ├── PouchDB (IndexedDB) — offline-first
-  └── Live Sync ─── {live:true, retry:true} ──→ CouchDB (via Traefik HTTPS)
-                                                         ↕
-                                                   Go API (chi)
-                                                     ├── Google OAuth / JWT
-                                                     ├── PDF (chromedp container)
-                                                     ├── NLP Watcher (goroutine)
-                                                     │   └── gRPC + TLS ──→ Python NLP (BERTimbau)
-                                                     ├── FCM Scheduler
-                                                     └── Twilio (futuro)
+  └── Live Sync ─── {live:true, retry:true}
+        ├── Dev:  /db/*  → Vite proxy → localhost:80 → Traefik → CouchDB (HTTP)
+        └── Prod: https://kanso.app/db/*  → Traefik → CouchDB (HTTPS + JWT)
+                                                             ↕
+                                                      Go API (chi)
+                                                        ├── Google OAuth / JWT
+                                                        ├── PDF (chromedp container)
+                                                        ├── NLP Watcher (goroutine)
+                                                        │   └── gRPC + TLS ──→ Python NLP (BERTimbau)
+                                                        ├── FCM Scheduler
+                                                        └── Twilio (futuro)
 
   Traefik v3 (File Provider — sem Docker socket)
-  ├── api.kanso.local  →  Go API :8080
-  ├── couchdb (db)     →  CouchDB :5984 (JWT auth + validate_doc_update)
+  ├── api → Go API :8080
+  ├── db  → CouchDB :5984 (JWT auth + validate_doc_update)
   └── Security: CSP, HSTS, XFO, XCTO, rate-limit, CORS
 ```
 
@@ -182,9 +183,11 @@ O frontend estará disponível em `http://localhost:5173`.
 
 O Vite proxy roteia:
 - `/api` → `http://localhost:8080` (Go backend)
-- CouchDB sync via `https://kanso.local/db` (Traefik, não Vite)
+- `/db` → `http://localhost:80` → Traefik → CouchDB (dev, via HTTP)
 
-**Importante:** Adicione `127.0.0.1 kanso.local` ao `/etc/hosts` para resolução DNS local.
+Em produção, o PouchDB sync usa `VITE_COUCHDB_URL` absoluto (ex: `https://kanso.app/db`) diretamente — sem Vite proxy.
+
+**Importante (produção):** Adicione `127.0.0.1 kanso.local` ao `/etc/hosts` para testes locais com HTTPS.
 
 ## Testes
 
@@ -293,7 +296,7 @@ kanso/
 | Variável | Descrição |
 |----------|-----------|
 | `VITE_API_URL` | URL base da API (padrão: `/api`) |
-| `VITE_COUCHDB_URL` | URL do CouchDB via Traefik (padrão: `https://kanso.local/db`) |
+| `VITE_COUCHDB_URL` | URL do CouchDB (padrão: `/db` — Vite proxy em dev; absoluto em produção como `https://kanso.app/db`) |
 | `VITE_GOOGLE_CLIENT_ID` | Client ID Google OAuth |
 | `VITE_VAPID_PUBLIC_KEY` | VAPID key para Web Push |
 

@@ -49,9 +49,27 @@ func NewRemoteGenerator(remoteURL string, timeout time.Duration) *Generator {
 
 // discoverWebSocketURL fetches the WebSocket debugger URL from a headless-shell
 // HTTP endpoint (e.g., http://chromedp:9222/json/version).
+// Headless-shell rejects requests with non-IP, non-localhost Host headers (DNS rebinding protection),
+// so we override the Host header to localhost and then replace localhost with the target hostname.
 func discoverWebSocketURL(baseURL string) (string, error) {
 	versionURL := baseURL + "/json/version"
-	resp, err := http.Get(versionURL)
+
+	target, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("discover ws url parse base: %w", err)
+	}
+
+	req, err := http.NewRequest("GET", versionURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("discover ws url create request: %w", err)
+	}
+	hostPort := target.Port()
+	if hostPort == "" {
+		hostPort = "80"
+	}
+	req.Host = "localhost:" + hostPort
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("discover ws url: %w", err)
 	}
@@ -71,7 +89,16 @@ func discoverWebSocketURL(baseURL string) (string, error) {
 	if v.WebSocketDebuggerURL == "" {
 		return "", fmt.Errorf("discover ws url: empty webSocketDebuggerUrl")
 	}
-	return v.WebSocketDebuggerURL, nil
+
+	wsURL, err := url.Parse(v.WebSocketDebuggerURL)
+	if err != nil {
+		return "", fmt.Errorf("discover ws url parse ws url: %w", err)
+	}
+	if wsURL.Host == req.Host {
+		wsURL.Host = target.Host
+	}
+
+	return wsURL.String(), nil
 }
 
 // Generate produces PDF bytes from the given HTML content using chromedp.

@@ -40,6 +40,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | fix-security-p1-01 | P1 Security Hardening — headers, rate limit, CouchDB isolation, JWT validation, dep update, logging, non-root containers | 2026-05-30 | 2026-05-30 |
 | fix-chromedp-separation-01 | Separar chromedp em container dedicado — API roda como appuser, sem seccomp | 2026-05-30 | 2026-05-30 |
 | sec-hardening-01 | Security Hardening — CR-05 + HI-01 + HI-02 + ME-01 | 2026-05-30 | 2026-05-30 |
+| fix-deleted-client-oauth | Corrigir deleted_client — fonte única .env via envDir | 2026-05-30 | 2026-05-30 |
 
 ---
 
@@ -126,3 +127,10 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 2026-05-30 | sec-hardening-01 | approved | Security Hardening — 4 tasks |
 | 2026-05-30 | sec-hardening-01 | executing | CR-05 chromedp flags → HI-01 Traefik → HI-02 gRPC TLS → ME-01 Vite proxy |
 | 2026-05-30 | sec-hardening-01 | executed | All 4 tasks complete. Builds pass. generator.go limpo, Traefik file provider, gRPC TLS, Vite proxy removido |
+| 2026-05-30 | fix-couchdb-password-env | approved | Criar infra/.env + descomentar COUCHDB_PASSWORD no .env raiz |
+| 2026-05-30 | fix-couchdb-password-env | executing | Task 1: gerar senha → Task 2: infra/.env → Task 3: .env raiz |
+| 2026-05-30 | fix-couchdb-password-env | executed | infra/.env criado, .env raiz atualizado, senha forte 6Hcw+OfIY83rA46R |
+| 2026-05-30 | fix-deleted-client-oauth | approved | Corrigir deleted_client — fonte única .env via envDir |
+| 2026-05-30 | fix-deleted-client-oauth | executed | frontend/vite.config.ts +envDir, frontend/.env removido. 69/69 testes OK |
+| 2026-05-30 | fix-chromedp-healthcheck | approved | Corrigir healthcheck + Dockerfile do chromedp |
+| 2026-05-30 | fix-chromedp-healthcheck | executed | Dockerfile limpo, healthcheck com socat, make up OK — 6/6 containers healthy |

@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: nlp-analysis
     status: "Phase 8 ✅ | Security hardening complete — 19/24 audit items fixed"
-last_updated: "2026-05-30T19:00:00.000Z"
-last_activity: "2026-05-30 — sec-hardening-01 executed: CR-05 chromedp flags, HI-01 Traefik file provider, HI-02 gRPC TLS, ME-01 Vite proxy"
+last_updated: "2026-05-30T19:20:00.000Z"
+last_activity: "2026-05-30 — sec-hardening-01 executed + chromedp fix (Host header) + Traefik HSTS fix + Vite proxy /db readicionado para dev"
 progress:
   total_phases: 9
   completed_phases: 8
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-17)
 Phase: 8 — Security Hardening ✅
 Milestone: v2 — NLP Analysis ✅ (complete)
 Branch: master
-Status: Phase 8 ✅ | Security hardening — 19/24 audit items fixed
-Last activity: 2026-05-30 — sec-hardening-01: CR-05 + HI-01 + HI-02 + ME-01
+Status: Phase 8 ✅ | Security hardening + bugfixes
+Last activity: 2026-05-30 — chromedp Host header fix + Traefik HSTS field + Vite proxy /db
 
 Progress: [████████████████████████] Phase 8 ✅
 
@@ -43,8 +43,8 @@ All plans executed. Ready for next phase (Phase 9 — Deploy).
 - Total plans completed: 21 (19 phase plans + 2 bugfix plans)
 - Security fixes: 15/19 SECURITY-AUDIT items verified fixed (P0 ✅ P1 ✅ P2 ✅)
 - Bug fixes: 7 (3 v1 + 4 v2: sentimento opcional, relatório contract, couchdb-jwt-auth, sentimentos-db)
-- Debug sessions resolved: 2 (analise-db-errado, relatorio-400)
-- Last activity: 2026-05-30 — Phase 8 security hardening planned
+- Debug sessions resolved: 3 (analise-db-errado, relatorio-400, chromedp-json-discovery)
+- Last activity: 2026-05-30 — chromedp Host header fix + Traefik HSTS fix + Vite proxy /db dev
 
 **Trend:**
 
@@ -63,7 +63,7 @@ All plans executed. Ready for next phase (Phase 9 — Deploy).
 - **Relatório sem body** — periodStart/periodEnd removidos do contrato. Backend computa: periodStart = último relatório concluído; periodEnd = now
 - **HI-01** reavaliado → migrar Docker provider → File provider (remover docker.sock)
 - **HI-02** reavaliado → adicionar TLS auto-assinado no gRPC
-- **ME-01** reavaliado → Vite proxy /db → Traefik proxy via HTTPS
+- **ME-01** reavaliado → Vite proxy /db → Traefik HTTP em dev; HTTPS direto em prod
 
 ## Security Status
 
