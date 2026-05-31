@@ -1,10 +1,17 @@
 #!/bin/bash
 # ============================================================
 # Kanso — VPS Provisioning Script
-# Uso: sudo ./infra/scripts/setup-vps.sh
+# Uso: ./infra/scripts/setup-vps.sh
 # Executar UMA VEZ no VPS Hostinger (Ubuntu 24.04 LTS)
 # ============================================================
 set -euo pipefail
+
+# Garante execução com bash (pipefail é bash-specific)
+if [ -z "$BASH_VERSION" ]; then
+  echo "ERROR: This script must be run with bash, not sh."
+  echo "Usage: bash $0"
+  exit 1
+fi
 
 echo "=== Kanso VPS Setup ==="
 
@@ -29,26 +36,28 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 
-# 5. Create project directory
-echo "[5/7] Creating /opt/kanso..."
-mkdir -p /opt/kanso
+# 5. Clone repository
+echo "[5/7] Cloning repository..."
+if [ -d /opt/kanso ]; then
+  if [ -d /opt/kanso/.git ]; then
+    echo "Repository already cloned. Pulling latest..."
+    cd /opt/kanso && git pull origin master
+  else
+    echo "WARNING: /opt/kanso exists but is not a git repo. Skipping clone."
+    echo "         Remove or move it first, then re-run this script."
+  fi
+else
+  git clone https://github.com/edsonaraujo/kanso.git /opt/kanso
+fi
 
 # 6. Create acme.json for Let's Encrypt (Traefik)
-echo "[6/8] Creating acme.json for Let's Encrypt..."
+echo "[6/7] Creating acme.json for Let's Encrypt..."
+mkdir -p /opt/kanso/infra/traefik
 touch /opt/kanso/infra/traefik/acme.json
 chmod 600 /opt/kanso/infra/traefik/acme.json
 
-# 7. Clone repository
-echo "[7/8] Cloning repository..."
-if [ ! -d /opt/kanso/.git ]; then
-  git clone https://github.com/edsonaraujo/kanso.git /opt/kanso
-else
-  echo "Repository already cloned. Pulling latest..."
-  cd /opt/kanso && git pull origin master
-fi
-
-# 8. Verify installation
-echo "[8/8] Verifying..."
+# 7. Verify installation
+echo "[7/7] Verifying..."
 docker --version
 docker compose version
 ufw status verbose
