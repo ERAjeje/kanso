@@ -2,10 +2,14 @@ package nlp
 
 import (
 	"context"
+	"crypto/x509"
+	"fmt"
+	"os"
 	"time"
 
 	pb "github.com/edson/kanso-api/internal/nlp/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -41,13 +45,28 @@ type AnalyzeResponse struct {
 	ModeloVersao     string            `json:"modeloVersao"`
 }
 
-func NewClient(addr string) (*Client, error) {
+func NewClient(addr string, caCertPath string) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
+
+	var opts []grpc.DialOption
+	if caCertPath != "" {
+		caPEM, err := os.ReadFile(caCertPath)
+		if err != nil {
+			return nil, fmt.Errorf("read ca cert %s: %w", caCertPath, err)
+		}
+		certPool := x509.NewCertPool()
+		if !certPool.AppendCertsFromPEM(caPEM) {
+			return nil, fmt.Errorf("failed to parse ca cert from %s", caCertPath)
+		}
+		creds := credentials.NewClientTLSFromCert(certPool, "")
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	} else {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+	opts = append(opts, grpc.WithBlock())
+
+	conn, err := grpc.DialContext(ctx, addr, opts...)
 	if err != nil {
 		return nil, err
 	}

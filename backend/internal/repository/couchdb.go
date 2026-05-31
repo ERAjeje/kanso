@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+const (
+	DBRegistros    = "registros"
+	DBSentimentos  = "sentimentos"
+	DBPreferencias = "preferencias"
+	DBRelatorios   = "relatorios"
+	DBUsuarios     = "usuarios"
+)
+
 type CouchDB struct {
 	baseURL    string
 	adminUser  string
@@ -65,7 +73,7 @@ func (c *CouchDB) CreateOrUpdateUser(doc *UserDoc) error {
 	}
 	doc.UpdatedAt = now
 
-	url := fmt.Sprintf("%s/usuarios/%s", c.baseURL, doc.ID)
+	url := fmt.Sprintf("%s/"+DBUsuarios+"/%s", c.baseURL, doc.ID)
 	body, _ := json.Marshal(doc)
 	req, _ := http.NewRequest("PUT", url, bytes.NewReader(body))
 	req.SetBasicAuth(c.adminUser, c.adminPass)
@@ -86,7 +94,7 @@ func (c *CouchDB) CreateOrUpdateUser(doc *UserDoc) error {
 // --- Push Preferences Repository Methods ---
 
 func (c *CouchDB) GetPushPrefs(sub string) (*PushPrefsDoc, error) {
-	url := fmt.Sprintf("%s/preferencias/push_prefs:%s", c.baseURL, sub)
+	url := fmt.Sprintf("%s/"+DBPreferencias+"/push_prefs:%s", c.baseURL, sub)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -122,7 +130,7 @@ func (c *CouchDB) SavePushPrefs(doc *PushPrefsDoc) error {
 		doc.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 	}
 	doc.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
-	return c.putDoc("preferencias", doc.ID, doc)
+	return c.putDoc(DBPreferencias, doc.ID, doc)
 }
 
 func (c *CouchDB) GetAllPushPrefs() ([]PushPrefsDoc, error) {
@@ -140,7 +148,7 @@ func (c *CouchDB) GetAllPushPrefs() ([]PushPrefsDoc, error) {
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/preferencias/_find", c.baseURL)
+	url := fmt.Sprintf("%s/"+DBPreferencias+"/_find", c.baseURL)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -249,11 +257,11 @@ func (c *CouchDB) CreateReportJob(job *ReportJobDoc) error {
 	if job.CreatedAt == "" {
 		job.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 	}
-	return c.putDoc("relatorios", job.ID, job)
+	return c.putDoc(DBRelatorios, job.ID, job)
 }
 
 func (c *CouchDB) GetReportJob(id string) (*ReportJobDoc, error) {
-	url := fmt.Sprintf("%s/relatorios/%s", c.baseURL, id)
+	url := fmt.Sprintf("%s/"+DBRelatorios+"/%s", c.baseURL, id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -281,7 +289,7 @@ func (c *CouchDB) GetReportJob(id string) (*ReportJobDoc, error) {
 }
 
 func (c *CouchDB) UpdateReportJobStatus(id, rev string, status ReportJobStatus, fileName, errorMsg string) error {
-	url := fmt.Sprintf("%s/relatorios/%s", c.baseURL, id)
+	url := fmt.Sprintf("%s/"+DBRelatorios+"/%s", c.baseURL, id)
 
 	// First get current doc to update
 	getReq, err := http.NewRequest("GET", url, nil)
@@ -345,7 +353,7 @@ func (c *CouchDB) ListReportJobsByUser(sub string) ([]ReportJobDoc, error) {
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/relatorios/_find", c.baseURL)
+	url := fmt.Sprintf("%s/"+DBRelatorios+"/_find", c.baseURL)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -396,7 +404,7 @@ func (c *CouchDB) GetLastCompletedReport(sub string) (*ReportJobDoc, error) {
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/relatorios/_find", c.baseURL)
+	url := fmt.Sprintf("%s/"+DBRelatorios+"/_find", c.baseURL)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -439,7 +447,7 @@ func (c *CouchDB) ReportJobExists(id string) (bool, error) {
 }
 
 func (c *CouchDB) GetUser(id string) (*UserDoc, error) {
-	url := fmt.Sprintf("%s/usuarios/%s", c.baseURL, id)
+	url := fmt.Sprintf("%s/"+DBUsuarios+"/%s", c.baseURL, id)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(c.adminUser, c.adminPass)
 
@@ -555,7 +563,7 @@ func (c *CouchDB) GetChanges(db, since string) (*ChangesResponse, error) {
 // GetCheckpoint reads the NLP watcher checkpoint document.
 // Returns ("", nil) if no checkpoint exists yet.
 func (c *CouchDB) GetCheckpoint() (*CheckpointDoc, error) {
-	url := fmt.Sprintf("%s/registros/checkpoint:nlp_watcher", c.baseURL)
+	url := fmt.Sprintf("%s/"+DBRegistros+"/checkpoint:nlp_watcher", c.baseURL)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -605,7 +613,7 @@ func (c *CouchDB) SaveCheckpoint(seq string) error {
 		doc.ID = "checkpoint:nlp_watcher"
 	}
 
-	return c.putDoc("registros", doc.ID, doc)
+	return c.putDoc(DBRegistros, doc.ID, doc)
 }
 
 // SaveAnalise writes an analysis document to the sentimentos database.
@@ -618,7 +626,7 @@ func (c *CouchDB) SaveAnalise(doc *AnaliseDoc) error {
 	if doc.AnalisadoEm == "" {
 		doc.AnalisadoEm = time.Now().UTC().Format(time.RFC3339)
 	}
-	return c.putDoc("sentimentos", doc.ID, doc)
+	return c.putDoc(DBSentimentos, doc.ID, doc)
 }
 
 // FindRegistrosByPeriod queries registros for a user between two timestamps.
@@ -644,7 +652,7 @@ func (c *CouchDB) FindRegistrosByPeriod(userSub, periodStart, periodEnd string) 
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/registros/_find", c.baseURL)
+	url := fmt.Sprintf("%s/"+DBRegistros+"/_find", c.baseURL)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)
@@ -701,7 +709,7 @@ func (c *CouchDB) FindAnaliseByRegistroIds(ids []string) ([]AnaliseDoc, error) {
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/sentimentos/_find", c.baseURL)
+	url := fmt.Sprintf("%s/"+DBSentimentos+"/_find", c.baseURL)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("new request: %w", err)

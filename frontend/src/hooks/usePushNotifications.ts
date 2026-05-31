@@ -40,7 +40,7 @@ export function usePushNotifications() {
         await pushSubscription({ fcmToken, timezone })
         setSubscribed(true)
       } catch (err) {
-        console.error('Failed to subscribe to push:', err)
+        console.warn('Failed to subscribe to push:', err)
       }
     }
   }

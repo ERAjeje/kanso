@@ -1,8 +1,9 @@
 ; CouchDB JWT Authentication Configuration
-; Matches backend JWT_SECRET for PouchDB sync
+; COPY this file to local.ini and replace with your actual secret:
+;   cp local.ini.example local.ini
+;   echo -n '<your-jwt-secret>' | base64
 ;
-; Generate updated value on secret change:
-;   echo -n '<new-secret>' | base64
+; WARNING: local.ini is gitignored — do NOT commit secrets.
 
 [couchdb]
 uuid = kanso-dev
@@ -14,4 +15,4 @@ authentication_handlers = {chttpd_auth, jwt_authentication_handler}, {chttpd_aut
 required_claims = exp,iat
 
 [jwt_keys]
-hmac:_default = ZGV2LXNlY3JldC1jaGFuZ2UtaW4tcHJvZHVjdGlvbg==
+hmac:_default = <base64-of-jwt-secret>

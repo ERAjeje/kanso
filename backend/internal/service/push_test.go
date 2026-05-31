@@ -22,7 +22,7 @@ func TestPushService_Subscribe_CreatesNewPrefs(t *testing.T) {
 	defer mockCouch.Close()
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
-	svc := NewPushService(couchRepo, "test-key")
+	svc := NewPushService(couchRepo, "test-key", "", "")
 
 	err := svc.Subscribe("user123", "fcm-token-123", "America/Sao_Paulo")
 	if err != nil {
@@ -52,7 +52,7 @@ func TestPushService_Subscribe_UpdatesExisting(t *testing.T) {
 	defer mockCouch.Close()
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
-	svc := NewPushService(couchRepo, "test-key")
+	svc := NewPushService(couchRepo, "test-key", "", "")
 
 	err := svc.Subscribe("user123", "new-token", "America/New_York")
 	if err != nil {
@@ -68,7 +68,7 @@ func TestPushService_GetPreferences_ReturnsDefaultsWhenNone(t *testing.T) {
 	defer mockCouch.Close()
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
-	svc := NewPushService(couchRepo, "test-key")
+	svc := NewPushService(couchRepo, "test-key", "", "")
 
 	prefs, err := svc.GetPreferences("user123")
 	if err != nil {
@@ -95,7 +95,7 @@ func TestPushService_UpdatePreferences_SavesChanges(t *testing.T) {
 	defer mockCouch.Close()
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
-	svc := NewPushService(couchRepo, "test-key")
+	svc := NewPushService(couchRepo, "test-key", "", "")
 
 	err := svc.UpdatePreferences("user123", false, []string{"14:00"})
 	if err != nil {
@@ -111,7 +111,7 @@ func TestPushService_Send_ReturnsErrorWhenNoToken(t *testing.T) {
 	defer mockCouch.Close()
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
-	svc := NewPushService(couchRepo, "test-key")
+	svc := NewPushService(couchRepo, "test-key", "", "")
 
 	err := svc.Send("user123")
 	if err == nil {
@@ -146,7 +146,7 @@ func TestPushService_Send_MakesFCMRequest(t *testing.T) {
 	defer fcmMock.Close()
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
-	svc := NewPushService(couchRepo, "test-server-key")
+	svc := NewPushService(couchRepo, "test-server-key", "", "")
 	svc.HTTPClient = fcmMock.Client()
 	svc.FCMURL = fcmMock.URL
 

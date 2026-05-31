@@ -9,26 +9,16 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /kanso-api ./cmd/kanso-api
 
 # ============================================================
-# Stage 2: Runtime with headless-shell for chromedp PDF generation
+# Stage 2: Runtime — minimal image, no chromedp
+# chromedp runs in a separate container (kanso-chromedp)
 # ============================================================
-FROM chromedp/headless-shell:latest AS runtime
-
-# Install ca-certificates for HTTPS calls
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
+FROM alpine:3.21 AS runtime
+RUN apk add --no-cache ca-certificates
 COPY --from=builder /kanso-api /usr/local/bin/kanso-api
-
-# Wrapper script: run Go API in background, then headless-shell in foreground
-RUN printf '#!/bin/sh\n\
-/usr/local/bin/kanso-api &\n\
-exec /headless-shell/run.sh "$@"\n' > /entrypoint.sh && chmod +x /entrypoint.sh
-
-ENV CHROMEDP_PATH=/headless-shell/headless-shell
-
+RUN adduser -D -g '' appuser
+USER appuser
 EXPOSE 8080
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/local/bin/kanso-api"]
 
 # ============================================================
 # Stage 3: Development with hot-reload (air)

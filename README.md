@@ -19,27 +19,46 @@ o terapeuta.
 
 ## Funcionalidades
 
-### Implementadas (v1)
+### Implementadas
 
-- **Autenticação Google OAuth** — login com conta Google, JWT com refresh automático
+- **Autenticação Google OAuth** — login com conta Google, JWT (HS256) com refresh automático
 - **Registro emocional estruturado** — 4 campos: sensações, sentimento (combobox customizável),
   contexto e pensamentos, com data/hora (suporte a registro retroativo)
 - **Offline-first** — dados salvos localmente no PouchDB (IndexedDB), sincronização automática
-  com CouchDB quando online (`live: true, retry: true`)
+  com CouchDB quando online via JWT auth
 - **Combobox de sentimentos** — autocomplete com Headless UI v2, cria novos sentimentos
   automaticamente ao digitar
-- **Navegação por abas** — Registrar, Histórico (placeholder) e Perfil
-- **Relatórios PDF** — geração assíncrona via chromedp + headless-shell, com polling de status
-  e download autenticado
+- **Histórico cronológico** — lista de registros em ordem reversa com cards expansíveis
+- **Análise NLP de emoções** — watcher em goroutine observa `_changes` feed do CouchDB,
+  envia texto para serviço Python (BERTimbau fine-tuned via gRPC com TLS), resultados
+  salvos como `analise_nlp` e exibidos como chips coloridos
+- **Relatórios PDF** — geração assíncrona via chromedp em container dedicado, com polling
+  de status e download autenticado (inclui resumo de emoções + chips por registro)
+- **Notificações push (FCM v1)** — scheduler Go dispara lembretes nos horários configurados,
+  autenticação via OAuth2 com service account
+- **Navegação por abas** — Registrar, Histórico e Perfil (configurações)
+-   **Segurança** — auditoria completa com 19/24 itens corrigidos:
+  - `validate_doc_update` para isolamento de dados por usuário no CouchDB (CR-03)
+  - JWT secret forte (256-bit) + validação de algoritmo HMAC (CR-02, ME-03)
+  - Push endpoint autenticado via API key + JWT admin (CR-04)
+  - Security headers via Traefik (CSP, HSTS, XFO, XCTO) (HI-07)
+  - Traefik File Provider — sem Docker socket (HI-01)
+  - CouchDB sem porta exposta ao host (ME-02)
+  - gRPC com TLS auto-assinado entre API e NLP (HI-02)
+  - Containers não-root (backend, scheduler, NLP) (HI-03/04/05)
+  - Logs estruturados com slog, sem PII (LO-04)
+  - Database names como constantes (IN-03)
+  - Chromedp sem flags inseguras (CR-05)
+  - Rate limiting via Traefik (10 req/min auth, 30 req/min db)
 
-### Futuro (v2)
+### Planejado (backlog)
 
-- Histórico com busca/filtros
-- Análise NLP de emoções (Python + transformers)
-- Notificações push (FCM)
-- Envio de relatórios via WhatsApp (Twilio)
+- Emotion chips — melhorar visualização no frontend e relatório PDF
+- WhatsApp automático — enviar relatório via Twilio
+- JWT em HttpOnly cookie (ME-05)
 - Dark mode
 - Bloqueio biométrico/PIN
+- Deploy VPS Hostinger
 
 ## Stack
 
@@ -50,8 +69,10 @@ o terapeuta.
 | Backend | Go + Chi + chromedp | 1.26 / 5.2 |
 | Autenticação | Google OAuth + JWT (HS256) | — |
 | Banco de dados | CouchDB | 3.5 |
-| Infraestrutura | Docker Compose + Traefik v3 | — |
-| NLP (futuro) | Python + FastAPI + transformers | — |
+| Proxy reverso | Traefik v3 (File Provider) | 3 |
+| Notificações | FCM HTTP v1 (OAuth2) | — |
+| NLP | Python + gRPC + BERTimbau | 3.12 / 1.69 |
+| Infraestrutura | Docker Compose | — |
 
 ## Arquitetura
 
@@ -59,20 +80,28 @@ o terapeuta.
 Browser (PWA)
   ├── React (UI)
   ├── PouchDB (IndexedDB) — offline-first
-  └── Live Sync ─── {live:true, retry:true} ──→ CouchDB
-                              ↕
-                        Go API (chi)
-                          ├── Google OAuth / JWT
-                          ├── PDF (chromedp)
-                          ├── FCM (futuro)
-                          └── Twilio (futuro)
-                              ↕
-                    Python NLP (futuro — interno)
+  └── Live Sync ─── {live:true, retry:true}
+        ├── Dev:  /db/*  → Vite proxy → localhost:80 → Traefik → CouchDB (HTTP)
+        └── Prod: https://kanso.app/db/*  → Traefik → CouchDB (HTTPS + JWT)
+                                                             ↕
+                                                      Go API (chi)
+                                                        ├── Google OAuth / JWT
+                                                        ├── PDF (chromedp container)
+                                                        ├── NLP Watcher (goroutine)
+                                                        │   └── gRPC + TLS ──→ Python NLP (BERTimbau)
+                                                        ├── FCM Scheduler
+                                                        └── Twilio (futuro)
+
+  Traefik v3 (File Provider — sem Docker socket)
+  ├── api → Go API :8080
+  ├── db  → CouchDB :5984 (JWT auth + validate_doc_update)
+  └── Security: CSP, HSTS, XFO, XCTO, rate-limit, CORS
 ```
 
 O frontend sincroniza **diretamente** com o CouchDB via PouchDB — o Go backend não participa
-de operações CRUD de registros. O backend lida apenas com autenticação e efeitos colaterais
-(geração de PDF, disparo de notificações, etc.).
+de operações CRUD de registros. O backend lida com autenticação, efeitos colaterais
+(geração de PDF, disparo de notificações, etc.) e o **NLP Watcher** — uma goroutine que
+observa o feed `_changes` do CouchDB via gRPC com TLS e envia novos registros para análise.
 
 ## Pré-requisitos
 
@@ -98,35 +127,50 @@ cd kanso
 3. Habilite a API **Google Identity Services**
 4. Crie uma credencial **OAuth 2.0 Client ID** do tipo **Web application**
 5. Adicione como **Authorized JavaScript origins**:
-   - `https://kanso.local` (com Traefik/TLS)
-   - `http://localhost:5173` (dev sem Traefik)
+   - `https://kanso.local`
+   - `http://localhost:5173`
 6. Adicione como **Authorized redirect URIs**:
-   - `https://kanso.local/login` (com Traefik/TLS)
-   - `http://localhost:5173/login` (dev sem Traefik)
+   - `https://kanso.local/login`
+   - `http://localhost:5173/login`
 
 ### 3. Configure as variáveis de ambiente
 
-Copie o arquivo de exemplo e preencha:
-
 ```bash
 cp .env.example .env
-# Edite o .env com seus valores
+# Edite o .env com seus valores reais
 ```
 
-### 4. Suba a infraestrutura
+Gere os secrets obrigatórios:
+```bash
+openssl rand -base64 32   # JWT_SECRET
+openssl rand -base64 12   # COUCHDB_PASSWORD
+openssl rand -base64 32   # SCHEDULER_API_KEY
+```
+
+### 4. Gere os certificados gRPC (TLS)
+
+```bash
+bash infra/certs/gen-grpc-certs.sh
+```
+
+### 5. Suba a infraestrutura
 
 ```bash
 make up
 ```
 
 Isso inicia via Docker Compose:
-- **Traefik** em `localhost:443` (TLS)
-- **CouchDB** em `localhost:5984`
-- **API Go** em `localhost:8080`
 
-### 5. Inicie o frontend
+| Serviço | Função | Acesso |
+|---------|--------|--------|
+| **Traefik** | Proxy reverso TLS (File Provider) | `kanso.local:443` |
+| **CouchDB** | Banco de dados (sem porta exposta ao host) | Rede Docker interna |
+| **API** | Go backend | `api:8080` |
+| **Chromedp** | Headless Chrome para PDFs | `chromedp:9222` |
+| **NLP** | Análise de emoções (BERTimbau) | `nlp:50051` (gRPC + TLS) |
+| **Scheduler** | Disparo de push notifications | Rede Docker interna |
 
-Em outro terminal:
+### 6. Inicie o frontend
 
 ```bash
 cd frontend
@@ -137,37 +181,31 @@ pnpm dev
 
 O frontend estará disponível em `http://localhost:5173`.
 
-O Vite proxy roteia automaticamente:
-- `/api` → `http://localhost:8080`
-- `/db` → `http://localhost:5984`
+O Vite proxy roteia:
+- `/api` → `http://localhost:8080` (Go backend)
+- `/db` → `http://localhost:80` → Traefik → CouchDB (dev, via HTTP)
 
-### Alternativa: rodar o backend local (sem Docker)
+Em produção, o PouchDB sync usa `VITE_COUCHDB_URL` absoluto (ex: `https://kanso.app/db`) diretamente — sem Vite proxy.
 
-```bash
-cd backend
-export COUCHDB_URL=http://localhost:5984
-export COUCHDB_PASSWORD=admin123
-export JWT_SECRET=dev-secret-change-in-production
-export GOOGLE_CLIENT_ID=seu-client-id
-go run ./cmd/kanso-api
-```
-
-> O backend pode rodar localmente ou em Docker. O CouchDB precisa estar acessível.
+**Importante (produção):** Adicione `127.0.0.1 kanso.local` ao `/etc/hosts` para testes locais com HTTPS.
 
 ## Testes
 
 ```bash
+# Todos os testes (via Make)
+make test
+
 # Frontend (Vitest + Testing Library)
 cd frontend && pnpm test
 
 # Backend — testes unitários
 cd backend && go test ./...
 
-# Backend — testes de integração (requer Chrome/headless-shell)
-cd backend && go test ./... -tags=integration
-
 # Backend — verificação de tipos
 cd backend && go vet ./...
+
+# NLP service (Python)
+cd nlp-service && python -m pytest
 ```
 
 ## Estrutura do Projeto
@@ -177,27 +215,34 @@ kanso/
 ├── backend/                    # Go API (chi)
 │   ├── cmd/kanso-api/main.go   # Entry point, rotas, DI
 │   └── internal/
-│       ├── config/config.go    # Variáveis de ambiente
-│       ├── handler/            # Handlers HTTP
-│       ├── service/            # Lógica de negócio
-│       ├── repository/         # Acesso a dados (CouchDB)
-│       ├── middleware/         # JWT middleware
-│       ├── pdf/                # Gerador PDF (chromedp)
+│       ├── config/             # Variáveis de ambiente
+│       ├── handler/            # Handlers HTTP (auth, push, report)
+│       ├── service/            # Lógica de negócio (auth, push, report, watcher)
+│       ├── repository/         # Acesso a dados CouchDB (couchdb.go)
+│       ├── middleware/         # JWT middleware com validação HMAC
+│       ├── nlp/                # Cliente gRPC + TLS para NLP service
+│       ├── pdf/                # Gerador PDF (chromedp remote)
 │       └── templates/          # Templates HTML para PDF
 ├── frontend/                   # React PWA
 │   ├── src/
-│   │   ├── components/        # Componentes UI
-│   │   ├── hooks/             # Hooks React (useAuth, usePouchSync)
-│   │   ├── pages/             # Páginas (Login, Register, Profile, History)
-│   │   ├── services/          # Serviços (auth, pouchdb, registros, reports)
-│   │   └── types/             # TypeScript types
+│   │   ├── components/         # UI (RegistroCard, SyncStatus, etc.)
+│   │   ├── hooks/              # useAuth, usePouchSync, usePushNotifications
+│   │   ├── pages/              # Login, Register, History, Profile
+│   │   ├── services/           # auth, pouchdb, registros, reports, push
+│   │   └── types/              # TypeScript types
 │   └── vite.config.ts
+├── scheduler/                  # Go scheduler para push notifications (FCM v1)
+├── nlp-service/                # Python gRPC + BERTimbau fine-tuned
+│   ├── src/                    # Servidor gRPC com TLS, classificador
+│   └── proto/                  # Definições protobuf
 ├── infra/
-│   ├── docker-compose.yml     # CouchDB + API + Traefik
-│   └── traefik/               # Configuração do Traefik v3
-├── Makefile                   # Comandos unificados (up/down/dev/test)
-├── nlp-service/               # (v2 — análise NLP de emoções)
-├── .env.example               # Exemplo de variáveis de ambiente
+│   ├── couchdb/                # Config JWT auth (local.ini gitignored)
+│   ├── traefik/                # Traefik v3 (File Provider — sem Docker socket)
+│   ├── chromedp/               # Container dedicado headless-shell
+│   ├── certs/                  # Certificados gRPC TLS (gitignored)
+│   └── docker-compose.yml
+├── Makefile
+├── .env.example
 └── README.md
 ```
 
@@ -212,70 +257,65 @@ kanso/
 | POST | `/api/auth/refresh` | Renova o JWT via cookie |
 | POST | `/api/auth/logout` | Limpa a sessão |
 
-### Protegidos (requerem `Authorization: Bearer <jwt>`)
+### Protegidos (`Authorization: Bearer <jwt>`)
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | GET | `/api/auth/me` | Dados do usuário autenticado |
-| POST | `/api/reports` | Solicita geração de relatório (retorna 202 + `jobId`) |
+| POST | `/api/reports` | Solicita geração de relatório (202 + `jobId`) |
 | GET | `/api/reports` | Lista relatórios do usuário |
 | GET | `/api/reports/{id}` | Status de um relatório |
 | GET | `/api/reports/{id}/download` | Download do PDF gerado |
+| POST | `/api/push/subscribe` | Registra subscription FCM + preferências |
+
+### Internas (rede Docker — API key)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/api/push/send` | Dispara notificações push (scheduler) |
 
 ## Variáveis de Ambiente
 
 ### Backend (`backend/`)
 
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `PORT` | `8080` | Porta do servidor |
-| `COUCHDB_URL` | `http://couchdb:5984` | URL de conexão com CouchDB |
-| `COUCHDB_USER` | `admin` | Usuário admin do CouchDB |
-| `COUCHDB_PASSWORD` | — | Senha do CouchDB |
-| `JWT_SECRET` | — | Chave para assinar JWTs (trocar em produção) |
-| `GOOGLE_CLIENT_ID` | — | Client ID do Google OAuth |
-| `PDF_TMP_DIR` | `/tmp/kanso-pdf` | Diretório para PDFs temporários |
-| `CHROMEDP_PATH` | — | Caminho do headless Chrome (auto no container) |
+| Variável | Descrição |
+|----------|-----------|
+| `PORT` | Porta do servidor (padrão: `8080`) |
+| `COUCHDB_URL` | URL do CouchDB (padrão: `http://couchdb:5984`) |
+| `COUCHDB_USER` | Usuário admin CouchDB (padrão: `admin`) |
+| `COUCHDB_PASSWORD` | **Obrigatória** — senha do CouchDB |
+| `JWT_SECRET` | **Obrigatória** — chave JWT 256-bit |
+| `GOOGLE_CLIENT_ID` | **Obrigatória** — Client ID Google OAuth |
+| `SCHEDULER_API_KEY` | **Obrigatória** — chave do scheduler p/ push |
+| `FCM_PROJECT_ID` | Project ID Firebase (FCM v1) |
+| `FCM_SERVICE_ACCOUNT_B64` | Service account JSON em base64 (FCM v1) |
+| `GRPC_CA_CERT` | Caminho CA cert gRPC TLS (padrão: `/certs/ca.crt`) |
 
 ### Frontend (`frontend/`)
 
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `VITE_API_URL` | `/api` | URL base da API (proxy Vite em dev) |
-| `VITE_COUCHDB_URL` | `/db` | URL base do CouchDB (proxy Vite em dev) |
-| `VITE_GOOGLE_CLIENT_ID` | — | Client ID do Google OAuth (mesmo do backend) |
+| Variável | Descrição |
+|----------|-----------|
+| `VITE_API_URL` | URL base da API (padrão: `/api`) |
+| `VITE_COUCHDB_URL` | URL do CouchDB (padrão: `/db` — Vite proxy em dev; absoluto em produção como `https://kanso.app/db`) |
+| `VITE_GOOGLE_CLIENT_ID` | Client ID Google OAuth |
+| `VITE_VAPID_PUBLIC_KEY` | VAPID key para Web Push |
 
 ### Docker Compose (`infra/docker-compose.yml`)
 
-| Variável | Padrão | Descrição |
-|----------|--------|-----------|
-| `COUCHDB_PASSWORD` | `admin123` | Senha do CouchDB |
-| `JWT_SECRET` | `dev-secret-change-in-production` | Chave JWT |
-| `GOOGLE_CLIENT_ID` | `dev-client-id` | Client ID Google OAuth |
-
----
-
-## Dívida Técnica
-
-Todos os itens identificados durante o MVP foram resolvidos na Phase 4:
-
-| # | Item | Status | Resolvido Em |
-|---|------|--------|-------------|
-| 1 | **URLs da API hardcoded** → env vars `VITE_API_URL` / `VITE_COUCHDB_URL` | ✅ | 2026-05-17 |
-| 2 | **CORS middleware** (`go-chi/cors` no backend) | ✅ | 2026-05-17 |
-| 3 | **Vite proxy** (`/api` → `:8080`, `/db` → `:5984`) | ✅ | 2026-05-17 |
-| 4 | **Traefik** no docker-compose com TLS | ✅ | 2026-05-17 |
-| 5 | **Makefile** com comandos unificados | ✅ | 2026-05-17 |
-| 6 | **nlp-service/README.md** com documentação v2 | ✅ | 2026-05-17 |
-
-**Ambiente de desenvolvimento local** configurado: `make up` + `make dev` sem dependência de DNS ou TLS.
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `COUCHDB_PASSWORD` | ✅ | Senha do CouchDB |
+| `JWT_SECRET` | ✅ | Chave JWT 256-bit |
+| `GOOGLE_CLIENT_ID` | ✅ | Client ID Google OAuth |
+| `SCHEDULER_API_KEY` | ✅ | Chave do scheduler |
+| `FCM_PROJECT_ID` | — | Project ID Firebase |
+| `FCM_SERVICE_ACCOUNT_B64` | — | Service account JSON base64 |
 
 ---
 
 ## Licença
 
-MIT — Código aberto para portfólio. Consulte o arquivo `LICENSE` (não incluído — adicionar
-conforme necessário).
+MIT — Código aberto para portfólio.
 
 ---
 

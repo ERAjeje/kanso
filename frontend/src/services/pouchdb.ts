@@ -47,7 +47,7 @@ function createSyncedDB(dbName: string): { local: PouchDB.Database; remote: Pouc
     .on('paused', () => notifySyncState(navigator.onLine ? 'online' : 'offline'))
     .on('active', () => notifySyncState('syncing'))
     .on('error', (err: unknown) => {
-      console.error(`PouchDB sync error (${dbName}):`, err)
+      console.warn(`PouchDB sync error (${dbName}):`, err)
       notifySyncState('offline')
     })
 

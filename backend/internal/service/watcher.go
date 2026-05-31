@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -68,12 +68,12 @@ func (s *WatcherService) Stop() {
 
 // run is the main watcher event loop. It runs in a goroutine launched by Start().
 func (s *WatcherService) run() {
-	log.Printf("watcher: event loop started")
+	slog.Info("watcher: event loop started")
 	// Determine starting sequence from checkpoint
 	checkpoint, err := s.couchRepo.GetCheckpoint()
 	since := "0"
 	if err != nil {
-		log.Printf("watcher: failed to get checkpoint: %v", err)
+		slog.Warn("watcher: failed to get checkpoint", "error", err)
 	} else if checkpoint != nil {
 		since = checkpoint.LastSeq
 	}
@@ -86,9 +86,9 @@ func (s *WatcherService) run() {
 		default:
 		}
 
-		resp, err := s.couchRepo.GetChanges("registros", since)
+		resp, err := s.couchRepo.GetChanges(repository.DBRegistros, since)
 		if err != nil {
-			log.Printf("watcher: failed to get changes: %v", err)
+			slog.Warn("watcher: failed to get changes", "error", err)
 			select {
 			case <-s.stopChan:
 				return
@@ -142,7 +142,7 @@ func (s *WatcherService) run() {
 				DataHora    string `json:"dataHora"`
 			}
 			if err := json.Unmarshal(result.Doc, &registro); err != nil {
-				log.Printf("watcher: failed to parse registro doc %s: %v", result.ID, err)
+				slog.Warn("watcher: failed to parse registro doc", "id", result.ID, "error", err)
 				continue
 			}
 
@@ -165,7 +165,7 @@ func (s *WatcherService) run() {
 				if analyzeErr == nil {
 					break
 				}
-				log.Printf("watcher: analyze attempt %d/3 failed for %s: %v", attempt+1, result.ID, analyzeErr)
+				slog.Warn("watcher: analyze attempt failed", "attempt", attempt+1, "id", result.ID, "error", analyzeErr)
 				if attempt < 2 {
 					select {
 					case <-s.stopChan:
@@ -177,7 +177,7 @@ func (s *WatcherService) run() {
 
 			if analyzeErr != nil {
 				// D-54: silent failure — checkpoint advances regardless
-				log.Printf("watcher: NLP analysis failed for %s after 3 retries: %v", result.ID, analyzeErr)
+				slog.Error("watcher: NLP analysis failed after 3 retries", "id", result.ID, "error", analyzeErr)
 				continue
 			}
 
@@ -192,7 +192,7 @@ func (s *WatcherService) run() {
 				ModeloVersao:     analysis.ModeloVersao,
 			}
 			if err := s.couchRepo.SaveAnalise(analiseDoc); err != nil {
-				log.Printf("watcher: failed to save analise for %s: %v", result.ID, err)
+				slog.Error("watcher: failed to save analise", "id", result.ID, "error", err)
 			}
 			processedRegistros = true
 		}
@@ -203,7 +203,7 @@ func (s *WatcherService) run() {
 		if resp.LastSeq != "" {
 			if processedRegistros {
 				if err := s.couchRepo.SaveCheckpoint(resp.LastSeq); err != nil {
-					log.Printf("watcher: failed to save checkpoint: %v", err)
+					slog.Error("watcher: failed to save checkpoint", "error", err)
 				}
 			}
 			since = resp.LastSeq

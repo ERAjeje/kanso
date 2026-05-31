@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/edson/kanso-api/internal/repository"
@@ -89,7 +89,7 @@ func (s *AuthService) SignJWT(claims *GoogleClaims) (*AuthResult, error) {
 			Email: claims.Email,
 			Name:  claims.Name,
 		}); err != nil {
-			log.Printf("Warning: failed to save user: %v", err)
+			slog.Warn("failed to save user", "error", err)
 		}
 	}
 

@@ -3,15 +3,18 @@ package config
 import "os"
 
 type Config struct {
-	Port          string
-	CouchDBURL    string
-	CouchDBUser   string
-	CouchDBPass   string
-	JWTSecret     string
-	GoogleClienID string
-	PDFTmpDir     string
-	FCMServerKey  string
-	NLPGrpAddr    string
+	Port                 string
+	CouchDBURL           string
+	CouchDBUser          string
+	CouchDBPass          string
+	JWTSecret            string
+	GoogleClienID        string
+	PDFTmpDir            string
+	FCMServerKey         string
+	FCMProjectID         string
+	FCMServiceAccountB64 string
+	NLPGrpAddr           string
+	SchedulerAPIKey      string
 }
 
 func Load() *Config {
@@ -23,8 +26,11 @@ func Load() *Config {
 		JWTSecret:     getEnv("JWT_SECRET", ""),
 		GoogleClienID: getEnv("GOOGLE_CLIENT_ID", ""),
 		PDFTmpDir:     getEnv("PDF_TMP_DIR", "/tmp/kanso-pdf"),
-		FCMServerKey:  getEnv("FCM_SERVER_KEY", ""),
-		NLPGrpAddr:    getEnv("NLP_GRPC_ADDR", "nlp:50051"),
+		FCMServerKey:         getEnv("FCM_SERVER_KEY", ""),
+		FCMProjectID:         getEnv("FCM_PROJECT_ID", ""),
+		FCMServiceAccountB64: getEnv("FCM_SERVICE_ACCOUNT_B64", ""),
+		NLPGrpAddr:           getEnv("NLP_GRPC_ADDR", "nlp:50051"),
+		SchedulerAPIKey: getEnv("SCHEDULER_API_KEY", ""),
 	}
 }
 

@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -33,7 +33,7 @@ func (h *PushHandler) HandleSubscribe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.pushSvc.Subscribe(sub, req.FCMToken, req.Timezone); err != nil {
-		log.Printf("failed to subscribe: %v", err)
+		slog.Warn("failed to subscribe", "error", err)
 		http.Error(w, `{"error":"failed to subscribe"}`, http.StatusInternalServerError)
 		return
 	}
@@ -52,7 +52,7 @@ func (h *PushHandler) HandleSend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.pushSvc.Send(req.UserID); err != nil {
-		log.Printf("failed to send push: %v", err)
+		slog.Warn("failed to send push", "error", err)
 		http.Error(w, `{"error":"failed to send push"}`, http.StatusInternalServerError)
 		return
 	}

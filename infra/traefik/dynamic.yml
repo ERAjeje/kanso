@@ -4,8 +4,90 @@ tls:
       keyFile: /etc/traefik/certs/kanso.local-key.pem
 
 http:
+  routers:
+    api:
+      rule: "Host(`kanso.edsonajeje.cloud`) && PathPrefix(`/api`)"
+      entrypoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: api
+      middlewares:
+        - auth-ratelimit
+        - secHeaders
+        - cors-headers
+
+    couchdb:
+      rule: "Host(`kanso.edsonajeje.cloud`) && PathPrefix(`/db`)"
+      entrypoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: couchdb
+      middlewares:
+        - couchdb-strip
+        - secHeaders
+        - db-ratelimit
+        - cors-headers
+
+  services:
+    api:
+      loadBalancer:
+        servers:
+          - url: "http://api:8080"
+
+    couchdb:
+      loadBalancer:
+        servers:
+          - url: "http://couchdb:5984"
+
   middlewares:
-    redirect-https:
-      redirectScheme:
-        scheme: https
-        permanent: true
+    couchdb-strip:
+      stripPrefix:
+        prefixes:
+          - "/db"
+
+    cors-headers:
+      headers:
+        accessControlAllowOriginList:
+          - "https://kanso.edsonajeje.cloud"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+        accessControlAllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+        accessControlAllowCredentials: true
+
+    secHeaders:
+      headers:
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' https://accounts.google.com https://accounts.google.com/gsi/ https://www.googleapis.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; frame-src https://accounts.google.com; connect-src 'self' https://accounts.google.com; img-src 'self' data:; font-src 'self' data:"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customFrameOptionsValue: "DENY"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=()"
+
+    auth-ratelimit:
+      rateLimit:
+        average: 10
+        burst: 20
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    db-ratelimit:
+      rateLimit:
+        average: 30
+        burst: 60
+        period: 1m
+        sourceCriterion:
+          ipStrategy:
+            depth: 1

@@ -47,7 +47,7 @@ func TestPushHandler_Subscribe_Returns200(t *testing.T) {
 	defer mockCouch.Close()
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
-	pushSvc := service.NewPushService(couchRepo, "test-key")
+	pushSvc := service.NewPushService(couchRepo, "test-key", "", "")
 	h := NewPushHandler(pushSvc)
 	router := pushRouter(h)
 
@@ -92,7 +92,7 @@ func TestPushHandler_Send_Returns200(t *testing.T) {
 	defer fcmMock.Close()
 
 	couchRepo := repository.NewCouchDB(mockCouch.URL, "admin", "pass")
-	pushSvc := service.NewPushService(couchRepo, "test-key")
+	pushSvc := service.NewPushService(couchRepo, "test-key", "", "")
 	pushSvc.HTTPClient = fcmMock.Client()
 	pushSvc.FCMURL = fcmMock.URL
 

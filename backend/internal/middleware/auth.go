@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -23,10 +25,18 @@ func JWTRequired(secret []byte) func(http.Handler) http.Handler {
 
 			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 			token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+				}
 				return secret, nil
-			})
+			}, jwt.WithValidMethods([]string{"HS256"}))
 
 			if err != nil || !token.Valid {
+				slog.Warn("auth: invalid token",
+					"path", r.URL.Path,
+					"ip", r.RemoteAddr,
+					"error", err,
+				)
 				http.Error(w, `{"error":"invalid token"}`, http.StatusUnauthorized)
 				return
 			}

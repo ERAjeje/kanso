@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: nlp-analysis
-status: "Phase 7 ✅ | All phases complete"
-last_updated: "2026-05-23T22:45:00.000Z"
-last_activity: "2026-05-23 — Phase 7 fully complete. V3 items added to roadmap."
+    status: "Phase 8 ✅ | Security hardening complete — 19/24 audit items fixed"
+last_updated: "2026-05-30T19:20:00.000Z"
+last_activity: "2026-05-30 — sec-hardening-01 executed + chromedp fix (Host header) + Traefik HSTS fix + Vite proxy /db readicionado para dev"
 progress:
-  total_phases: 8
-  completed_phases: 7
-    total_plans: 21
-    completed_plans: 21
-    percent: 100
+  total_phases: 10
+  completed_phases: 8
+    total_plans: 23
+    completed_plans: 22
+    percent: 88
 ---
 
 # Project State
@@ -24,49 +24,86 @@ See: .planning/PROJECT.md (updated 2026-05-17)
 
 ## Current Position
 
-Phase: 8 — V3 — Integração & Qualidade (planned)
+Phase: 8 — Security Hardening ✅
 Milestone: v2 — NLP Analysis ✅ (complete)
 Branch: master
-Status: Phase 7 ✅ | All phases complete
-Last activity: 2026-05-23 — Phase 7 fully complete with bug fixes; V3 roadmap registered
+Status: Phase 8 ✅ | Security hardening + bugfixes
+Last activity: 2026-05-30 — chromedp Host header fix + Traefik HSTS field + Vite proxy /db
 
-Progress: [████████████████████] Phase 7 ✅ — v2 complete
+Progress: [████████████████████████] Phase 8 ✅ | Phase 09 ✅ Approved · Executing | Phase 10 📋 Pending approval
 
 ## Active Plans
 
-All plans executed. See ROADMAP.md for V3 planned activities.
+| Plan ID | Status | Description |
+|---------|--------|-------------|
+| 09-deploy-vps | Executed (scripts + configs criados) | Deploy VPS Hostinger — pendente: execução manual na VPS | ✅ |
+| 10-sentiment-training | Pending approval | Sentiment Training — edição no History, coleta de dados, batch retraining, re-análise lazy |
 
 ## Performance Metrics
 
 **Velocity:**
 
 - Total plans completed: 21 (19 phase plans + 2 bugfix plans)
+- Security fixes: 15/19 SECURITY-AUDIT items verified fixed (P0 ✅ P1 ✅ P2 ✅)
 - Bug fixes: 7 (3 v1 + 4 v2: sentimento opcional, relatório contract, couchdb-jwt-auth, sentimentos-db)
-- Debug sessions resolved: 2 (analise-db-errado, relatorio-400)
-- Last activity: 2026-05-23 — Phase 7 complete + V3 roadmap
+- Debug sessions resolved: 3 (analise-db-errado, relatorio-400, chromedp-json-discovery)
+- Last activity: 2026-05-30 — chromedp Host header fix + Traefik HSTS fix + Vite proxy /db dev
 
 **Trend:**
 
 - v1 MVP: ✅ All phases complete
 - v2 NLP: ✅ All phases complete (07-01, 07-02, 07-03)
-- v3 Planned: Emotion chips refactor, security audit, WhatsApp integration
+- v3 Security: 🔄 In progress — 4 pending plans
+- v3 Emotion chips/WhatsApp: 📅 Deferred
 
 ## Decisions
 
-- **Wrapper entrypoint** no Dockerfile para rodar Go API + headless-shell no mesmo container
+- **Wrapper entrypoint** no Dockerfile para rodar Go API + headless-shell no mesmo container (legacy — chromedp agora é container separado)
 - **env_file** no docker-compose em vez de `environment` com variáveis de configuração
 - **env_file** define GOOGLE_CLIENT_ID, JWT_SECRET, COUCHDB_PASSWORD; environment mantém apenas vars fixas
 - **Sentimento opcional** — campo sentimento no formulário não é obrigatório. Se vazio, salva como "" e no histórico exibe "Buscando sentimento"
 - **Workflow reforçado** — HARD RULES adicionadas ao AGENTS.md: sem código sem `/approve`, sequência LOCKED, bugs via `/gsd-debug`, verificação S.T.O.P. pré-código
 - **Relatório sem body** — periodStart/periodEnd removidos do contrato. Backend computa: periodStart = último relatório concluído; periodEnd = now
+- **HI-01** reavaliado → migrar Docker provider → File provider (remover docker.sock)
+- **HI-02** reavaliado → adicionar TLS auto-assinado no gRPC
+- **ME-01** reavaliado → Vite proxy /db → Traefik HTTP em dev; HTTPS direto em prod
 
-## V3 Roadmap
+## Security Status
 
-See ROADMAP.md for full details on Phase 8 — V3 — Integração & Qualidade:
+### Security Audit — Coverage (19/24 items)
 
-1. **Refatorar emotion chips** — Melhorar visualização dos chips de sentimentos no frontend (RegistroCard) e relatório PDF
-2. **Corrigir vulnerabilidades de segurança** — Auditoria e correção de falhas
-3. **WhatsApp automático** — Cadastro do telefone da psicóloga + envio automático do relatório via WhatsApp ao gerar
+#### ✅ Fixed (15)
+| Item | Fix |
+|------|-----|
+| CR-02 | JWT secret rotacionado (256-bit) |
+| CR-03 | validate_doc_update implantado nos 5 DBs |
+| CR-04 | Push middleware c/ API key + JWT admin |
+| HI-03/04/05 | Containers com USER appuser |
+| HI-06 | golang.org/x/net v0.55.0 |
+| HI-07 | Security headers via Traefik secHeaders |
+| ME-02 | CouchDB porta 5984 removida do host |
+| ME-03 | JWT algorithm validation (SigningMethodHMAC) |
+| ME-04 | :-admin123 removido, validação obrigatória |
+| LO-01 | NLP subprocess removido |
+| LO-03 | SW catch com console.warn |
+| IN-01 | console.error removido |
+| IN-03 | DB names em constantes repository.DB* |
+| LO-04 | log.Printf → slog estruturado |
+| P2-05 | Decisões arquiteturais documentadas |
+
+#### ✅ Fixed (4 — sec-hardening-01)
+| Item | Fix |
+|------|-----|
+| CR-05 | `disable-web-security` + `allow-file-access-from-files` removidos do chromedp |
+| HI-01 | Traefik migrado para File provider — docker.sock removido |
+| HI-02 | gRPC TLS auto-assinado — script certs/ + volume compartilhado |
+| ME-01 | Vite proxy `/db` removido — PouchDB via Traefik HTTPS |
+
+#### ✅ Deferred (2)
+| Item | Decisão |
+|------|---------|
+| ME-05 | JWT localStorage → adiado para v4 |
+| CR-01 | Google OAuth client secret — fluxo SPA (ID token) não precisa de secret. Client ID já rotacionado. |
 
 ## Session Continuity
 
