@@ -13,14 +13,6 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 ---
 
-## Just Approved
-
-| Plan ID | Description | Approved At |
-|---------|-------------|-------------|
-| fix-setup-vps-script | setup-vps.sh — bash guard, subdirs, idempotência, step numbers | 2026-05-31 |
-
----
-
 ## Approved Plans
 
 | Plan ID | Description | Approved At | Executed |
@@ -80,6 +72,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 2026-05-30 | fix-security-p2-05-arquitetura | approved | P2-05: Decisões arquiteturais — Docker socket, gRPC TLS, Vite proxy, JWT cookie |
 | 2026-05-30 | fix-security-p2-05-arquitetura | executed | Decisões: HI-01 aceito, HI-02 aceito, ME-01 db-ratelimit no Traefik, ME-05 adiado v4 |
 | 2026-05-31 | fix-setup-vps-script | approved | setup-vps.sh — bash guard, subdirs, idempotência, step numbers |
+| 2026-05-31 | fix-setup-vps-script | executed | infra/scripts/setup-vps.sh corrigido |
 
 | 2026-05-23 | fix-couchdb-jwt-auth | approved | PouchDB sync fix — CouchDB JWT auth config + _security docs |
 | 2026-05-23 | fix-couchdb-jwt-auth | executed | infra/couchdb/local.ini + docker-compose mount + _security in main.go |
