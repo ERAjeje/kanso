@@ -100,7 +100,19 @@ http:
       middlewares:
         - secHeaders
 
+    http-catchall:
+      rule: "HostRegexp(`{host:.+}`)"
+      entrypoints:
+        - web
+      middlewares:
+        - redirect-to-https
+      service: noop
+
   services:
+    noop:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:65535"
     api:
       loadBalancer:
         servers:
@@ -168,3 +180,8 @@ http:
         sourceCriterion:
           ipStrategy:
             depth: 1
+
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true

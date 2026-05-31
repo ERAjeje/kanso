@@ -9,7 +9,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | Plan ID | Description | Created |
 |---------|-------------|---------|
 | 10-sentiment-training | Sentiment Training — edição no History, coleta de dados, batch retraining, re-análise lazy | 2026-05-30 |
-| pwa-install-prompt | PWA install prompt — hook, banner, ícones, manifest | 2026-05-31 |
+| fix-traefik-acme-vps | Corrigir ACME challenge no VPS — remover redirect entrypoint, adicionar catch-all HTTP router | 2026-05-31 |
 
 ---
 
@@ -46,6 +46,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | fix-chromedp-separation-01 | Separar chromedp em container dedicado — API roda como appuser, sem seccomp | 2026-05-30 | 2026-05-30 |
 | sec-hardening-01 | Security Hardening — CR-05 + HI-01 + HI-02 + ME-01 | 2026-05-30 | 2026-05-30 |
 | fix-deleted-client-oauth | Corrigir deleted_client — fonte única .env via envDir | 2026-05-30 | 2026-05-30 |
+| fix-traefik-acme-vps | Corrigir ACME challenge no VPS — remover redirect entrypoint, adicionar catch-all HTTP router | 2026-05-31 | — |
 
 ---
 
@@ -61,6 +62,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 ## Log
 
+| 2026-05-31 | fix-traefik-acme-vps | approved | Corrigir ACME challenge — remover redirect entrypoint, catch-all HTTP router |
 | 2026-05-30 | fix-security-p2-01-credenciais | approved | P2-01: CouchDB password hardening — remover fallback admin123 |
 | 2026-05-30 | fix-security-p2-01-credenciais | executed | docker-compose.yml: :-admin123 removido dos 3 serviços, validação obrigatória |
 | 2026-05-30 | fix-security-p2-02-correcoes-rapidas | approved | P2-02: Correções rápidas — NLP subprocess, SW error, console.error, DB constants |
