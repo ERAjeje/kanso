@@ -9,13 +9,15 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | Plan ID | Description | Created |
 |---------|-------------|---------|
 | 10-sentiment-training | Sentiment Training — edição no History, coleta de dados, batch retraining, re-análise lazy | 2026-05-30 |
+| pwa-install-prompt | PWA install prompt — hook, banner, ícones, manifest | 2026-05-31 |
 
 ---
 
 ## Approved Plans
 
 | Plan ID | Description | Approved At | Executed |
-| 09-deploy-vps | Deploy VPS Hostinger — DNS, Traefik/Let's Encrypt, docker-compose produção, backup, deploy script | 2026-05-30 | — | 
+| 09-deploy-vps | Deploy VPS Hostinger — DNS, Traefik/Let's Encrypt, docker-compose produção, backup, deploy script | 2026-05-30 | — |
+| pwa-install-prompt | PWA install prompt — hook, banner, ícones, manifest | 2026-05-31 | 2026-05-31 | 
 | fix-security-p2-01-credenciais | P2-01: CouchDB password hardening | 2026-05-30 | 2026-05-30 |
 | fix-security-p2-02-correcoes-rapidas | P2-02: Correções rápidas | 2026-05-30 | 2026-05-30 |
 | fix-security-p2-03-fcm-v1 | P2-03: FCM HTTP v1 migration | 2026-05-30 | 2026-05-30 |
@@ -137,3 +139,5 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 2026-05-30 | fix-deleted-client-oauth | executed | frontend/vite.config.ts +envDir, frontend/.env removido. 69/69 testes OK |
 | 2026-05-30 | fix-chromedp-healthcheck | approved | Corrigir healthcheck + Dockerfile do chromedp |
 | 2026-05-30 | fix-chromedp-healthcheck | executed | Dockerfile limpo, healthcheck com socat, make up OK — 6/6 containers healthy |
+| 2026-05-31 | pwa-install-prompt | approved | PWA install prompt — hook, banner, ícones, manifest |
+| 2026-05-31 | pwa-install-prompt | executed | hook useInstallPrompt + InstallBanner + ícones Pillow + manifest unificado + 9+4 testes |
