@@ -5,6 +5,17 @@ tls:
 
 http:
   routers:
+    api-dev:
+      rule: "Host(`kanso.local`) && PathPrefix(`/api`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: api
+      middlewares:
+        - auth-ratelimit
+        - secHeaders
+        - cors-headers
+
     api:
       rule: "Host(`kanso.edsonajeje.cloud`) && PathPrefix(`/api`)"
       entrypoints:
@@ -15,6 +26,39 @@ http:
       middlewares:
         - auth-ratelimit
         - secHeaders
+        - cors-headers
+
+    api-local:
+      rule: "Host(`localhost`) && PathPrefix(`/api`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: api
+      middlewares:
+        - auth-ratelimit
+        - cors-headers
+
+    couchdb-dev:
+      rule: "Host(`kanso.local`) && PathPrefix(`/db`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: couchdb
+      middlewares:
+        - couchdb-strip
+        - secHeaders
+        - db-ratelimit
+        - cors-headers
+
+    couchdb-local:
+      rule: "Host(`localhost`) && PathPrefix(`/db`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: couchdb
+      middlewares:
+        - couchdb-strip
+        - db-ratelimit
         - cors-headers
 
     couchdb:
@@ -30,11 +74,42 @@ http:
         - db-ratelimit
         - cors-headers
 
+    frontend-dev:
+      rule: "Host(`kanso.local`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: frontend
+      middlewares:
+        - secHeaders
+
+    frontend-local:
+      rule: "Host(`localhost`)"
+      entrypoints:
+        - websecure
+      tls: {}
+      service: frontend
+
+    frontend:
+      rule: "Host(`kanso.edsonajeje.cloud`)"
+      entrypoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: frontend
+      middlewares:
+        - secHeaders
+
   services:
     api:
       loadBalancer:
         servers:
           - url: "http://api:8080"
+
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:80"
 
     couchdb:
       loadBalancer:
@@ -50,6 +125,8 @@ http:
     cors-headers:
       headers:
         accessControlAllowOriginList:
+          - "http://localhost:5173"
+          - "https://kanso.local"
           - "https://kanso.edsonajeje.cloud"
         accessControlAllowMethods:
           - "GET"

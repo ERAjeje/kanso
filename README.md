@@ -78,24 +78,27 @@ o terapeuta.
 
 ```
 Browser (PWA)
-  ├── React (UI)
-  ├── PouchDB (IndexedDB) — offline-first
-  └── Live Sync ─── {live:true, retry:true}
-        ├── Dev:  /db/*  → Vite proxy → localhost:80 → Traefik → CouchDB (HTTP)
-        └── Prod: https://kanso.app/db/*  → Traefik → CouchDB (HTTPS + JWT)
-                                                             ↕
-                                                      Go API (chi)
-                                                        ├── Google OAuth / JWT
-                                                        ├── PDF (chromedp container)
-                                                        ├── NLP Watcher (goroutine)
-                                                        │   └── gRPC + TLS ──→ Python NLP (BERTimbau)
-                                                        ├── FCM Scheduler
-                                                        └── Twilio (futuro)
+  │
+  ├── Dev:  http://localhost:5173  (Vite dev server — proxy /api e /db)
+  └── Prod: https://kanso.app      (nginx → static files SPA)
+                                          │
+                                    Traefik v3 (File Provider — sem Docker socket)
+                                      ├── / → frontend nginx :80 (static SPA)
+                                      ├── /api/* → Go API :8080
+                                      ├── /db/* → CouchDB :5984 (JWT + validate_doc_update)
+                                      └── Security: CSP, HSTS, XFO, XCTO, rate-limit, CORS
 
-  Traefik v3 (File Provider — sem Docker socket)
-  ├── api → Go API :8080
-  ├── db  → CouchDB :5984 (JWT auth + validate_doc_update)
-  └── Security: CSP, HSTS, XFO, XCTO, rate-limit, CORS
+  Frontend (nginx:alpine):
+  ├── Serve static build (frontend/dist/)
+  └── SPA fallback → index.html (client-side routing)
+
+  Go API (chi):
+  ├── Google OAuth / JWT
+  ├── PDF (chromedp container)
+  ├── NLP Watcher (goroutine)
+  │   └── gRPC + TLS ──→ Python NLP (BERTimbau)
+  ├── FCM Scheduler
+  └── Twilio (futuro)
 ```
 
 O frontend sincroniza **diretamente** com o CouchDB via PouchDB — o Go backend não participa
@@ -166,28 +169,57 @@ Isso inicia via Docker Compose:
 | **Traefik** | Proxy reverso TLS (File Provider) | `kanso.local:443` |
 | **CouchDB** | Banco de dados (sem porta exposta ao host) | Rede Docker interna |
 | **API** | Go backend | `api:8080` |
+| **Frontend** | nginx servindo SPA (frontend/dist/) | Traefik → `frontend:80` |
 | **Chromedp** | Headless Chrome para PDFs | `chromedp:9222` |
 | **NLP** | Análise de emoções (BERTimbau) | `nlp:50051` (gRPC + TLS) |
 | **Scheduler** | Disparo de push notifications | Rede Docker interna |
 
-### 6. Inicie o frontend
+### 6. Deploy do frontend (produção)
+
+Em produção, o frontend é servido por um container nginx dentro da stack Docker.
+Você precisa fazer o build na sua máquina e enviar apenas a pasta `dist/` para o VPS:
 
 ```bash
+# Na sua máquina (com Node):
+cd frontend
+pnpm install
+pnpm build
+
+# Envia apenas o build para o VPS (economiza espaço em disco)
+rsync -avz --delete dist/ usuario@vps:/caminho/kanso/frontend/dist/
+```
+
+O `docker-compose.yml` já monta `frontend/dist/` no nginx. Após enviar o build:
+
+```bash
+# No VPS — reinicia apenas o frontend
+cd infra && docker compose restart frontend
+```
+
+**Limpeza opcional no VPS:** você pode remover `frontend/src/`, `frontend/node_modules/` e outros arquivos de desenvolvimento — apenas `frontend/dist/` (e `frontend/public/`) são necessários.
+
+### 7. Desenvolvimento local
+
+```bash
+# Terminal 1: infraestrutura
+make up
+
+# Terminal 2: frontend com hot-reload
 cd frontend
 pnpm install
 pnpm dev
 # ou: make dev
 ```
 
-O frontend estará disponível em `http://localhost:5173`.
+O frontend estará disponível em:
+- **Desenvolvimento:** `http://localhost:5173` (Vite dev server com hot-reload)
+- **Produção local:** `https://kanso.local` (nginx + Traefik, após build)
 
-O Vite proxy roteia:
+**Vite proxy (dev apenas):**
 - `/api` → `http://localhost:8080` (Go backend)
-- `/db` → `http://localhost:80` → Traefik → CouchDB (dev, via HTTP)
+- `/db` → `http://localhost:80` → Traefik → CouchDB (via HTTP)
 
-Em produção, o PouchDB sync usa `VITE_COUCHDB_URL` absoluto (ex: `https://kanso.app/db`) diretamente — sem Vite proxy.
-
-**Importante (produção):** Adicione `127.0.0.1 kanso.local` ao `/etc/hosts` para testes locais com HTTPS.
+**Importante:** Adicione `127.0.0.1 kanso.local` ao `/etc/hosts` para testes locais com HTTPS.
 
 ## Testes
 
@@ -240,6 +272,7 @@ kanso/
 │   ├── traefik/                # Traefik v3 (File Provider — sem Docker socket)
 │   ├── chromedp/               # Container dedicado headless-shell
 │   ├── certs/                  # Certificados gRPC TLS (gitignored)
+│   ├── frontend/               # Config nginx para servir o SPA
 │   └── docker-compose.yml
 ├── Makefile
 ├── .env.example
