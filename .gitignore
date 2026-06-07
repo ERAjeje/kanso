@@ -26,6 +26,9 @@ infra/secrets/
 SECURITY-AUDIT.md
 .planning/**/SECURITY.md
 
+# --- Build Artifacts ---
+*.tsbuildinfo
+
 # --- Python ---
 __pycache__/
 *.pyc
