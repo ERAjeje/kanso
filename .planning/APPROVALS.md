@@ -8,6 +8,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 | Plan ID | Description | Created |
 |---------|-------------|---------|
+| fix-combobox-datepicker | Fix SentimentoCombobox vazio + custom DateTimePicker com date-fns | 2026-06-07 |
 | fix-traefik-acme-vps | Corrigir ACME challenge no VPS — remover redirect entrypoint, adicionar catch-all HTTP router | 2026-05-31 |
 
 ---
@@ -151,3 +152,4 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 | 2026-05-30 | fix-chromedp-healthcheck | executed | Dockerfile limpo, healthcheck com socat, make up OK — 6/6 containers healthy |
 | 2026-05-31 | pwa-install-prompt | approved | PWA install prompt — hook, banner, ícones, manifest |
 | 2026-05-31 | pwa-install-prompt | executed | hook useInstallPrompt + InstallBanner + ícones Pillow + manifest unificado + 9+4 testes |
+| 2026-06-07 | nlp-global-syntaxerror | fixed | SyntaxError: `global _current_model_version` após uso na linha 27. Movido para linha 26. 4/4 health tests ✅ |

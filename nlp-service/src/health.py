@@ -23,6 +23,8 @@ async def model_version():
 
 @app.post("/train")
 async def handle_train():
+    global _current_model_version
+
     if not _train_lock.acquire(blocking=False):
         return {"status": "already_running", "model_version": _current_model_version}
 
@@ -34,7 +36,6 @@ async def handle_train():
 
         # After training, increment model version
         from src.model_config import MODEL_VERSION as BASE_VERSION
-        global _current_model_version
 
         version_parts = BASE_VERSION.lstrip("v").split(".")
         major = int(version_parts[0])
