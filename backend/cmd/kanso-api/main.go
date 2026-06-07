@@ -209,6 +209,10 @@ func main() {
 		slog.Info("NLP watcher started", "addr", cfg.NLPGrpAddr)
 	}
 
+	// Create treinamento service (works even without NLP client)
+	treinamentoSvc := service.NewTreinamentoService(couchRepo, nlpClient, cfg)
+	treinamentoHandler := handler.NewTreinamentoHandler(treinamentoSvc)
+
 	ensureCouchDBDatabases(cfg)
 	ensureCouchDBIndexes(cfg)
 	ensureValidateDocUpdate(cfg)
@@ -239,6 +243,9 @@ func main() {
 		r.Get("/api/reports/{id}", reportHandler.HandleGetReport)
 		r.Get("/api/reports/{id}/download", reportHandler.HandleDownload)
 		r.Post("/api/push/subscribe", pushHandler.HandleSubscribe)
+		r.Post("/api/train", treinamentoHandler.HandleTrain)
+		r.Get("/api/train/status", treinamentoHandler.HandleTrainStatus)
+		r.Post("/api/reanalyze", treinamentoHandler.HandleReanalyze)
 	})
 
 	// Push send — JWT admin role OR scheduler API key
