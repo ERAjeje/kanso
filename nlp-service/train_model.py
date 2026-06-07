@@ -13,7 +13,7 @@ from transformers import (
 )
 import evaluate
 
-from src.model_config import LABELS, NUM_LABELS, MAX_LENGTH, MODEL_VERSION
+from src.model_config import LABELS, NUM_LABELS, MAX_LENGTH, MODEL_VERSION, COUCHDB_URL, COUCHDB_TREINAMENTO_DB
 from data.mappings import map_goemotions_row, compute_pos_weights, NUM_GOEMOTIONS
 from data.curated_phrases import CURATED_PHRASES
 from train_augment import load_back_translation_model, augment_dataset, deduplicate
@@ -74,6 +74,69 @@ def load_curated_phrases() -> Dataset:
     texts, labels = zip(*[(t, v) for t, v in CURATED_PHRASES])
     ds = Dataset.from_dict({"text": list(texts), "labels": list(labels)})
     return deduplicate_dataset(ds)
+
+
+def label_to_multihot(label: str) -> list:
+    """Convert a single label string to a multi-hot vector of length NUM_LABELS."""
+    vec = [0] * NUM_LABELS
+    try:
+        idx = LABELS.index(label)
+        vec[idx] = 1
+    except ValueError:
+        pass
+    return vec
+
+
+def load_training_from_couchdb():
+    """Load training data from the CouchDB treinamento database.
+
+    Connects to CouchDB, queries all docs with type 'treinamento',
+    converts each label string to a multi-hot vector, and returns
+    a Dataset in the same format as load_goemotions_dataset().
+
+    Returns None if the connection fails or no data is found.
+    """
+    import requests
+
+    try:
+        # Determine the _find endpoint URL
+        couchdb_find_url = COUCHDB_URL.rstrip("/") + "/" + COUCHDB_TREINAMENTO_DB + "/_find"
+
+        query = {
+            "selector": {"type": "treinamento"},
+            "limit": 10000,
+        }
+
+        resp = requests.post(couchdb_find_url, json=query, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+
+        docs = data.get("docs", [])
+        if not docs:
+            logger.info("No training examples found in CouchDB treinamento DB")
+            return None
+
+        texts = []
+        labels_list = []
+        for doc in docs:
+            texto = doc.get("texto", "").strip()
+            label_str = doc.get("label", "").strip().lower()
+            if not texto or not label_str:
+                continue
+            vector = label_to_multihot(label_str)
+            texts.append(texto)
+            labels_list.append(vector)
+
+        if not texts:
+            return None
+
+        ds = Dataset.from_dict({"text": texts, "labels": labels_list})
+        logger.info("Loaded %d training examples from CouchDB", len(ds))
+        return ds
+
+    except Exception as e:
+        logger.warning("Failed to load training data from CouchDB: %s", e)
+        return None
 
 
 def deduplicate_dataset(ds: Dataset) -> Dataset:
@@ -175,6 +238,12 @@ def train():
 
     logger.info("Step 3: Combining datasets")
     combined = concatenate_datasets([goemotions_ds, curated_ds])
+
+    logger.info("Step 3b: Loading training data from CouchDB treinamento DB")
+    couchdb_ds = load_training_from_couchdb()
+    if couchdb_ds is not None and len(couchdb_ds) > 0:
+        logger.info("CouchDB training data loaded: %d rows", len(couchdb_ds))
+        combined = concatenate_datasets([combined, couchdb_ds])
 
     logger.info("Step 4: Splitting train/validation (80/20)")
     split = combined.train_test_split(test_size=0.2, seed=42)
