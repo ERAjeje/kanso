@@ -62,7 +62,11 @@ export function History() {
       {!loading && !error && registros.length > 0 && (
         <div className="space-y-4">
           {registros.map(r => (
-            <RegistroCard key={r._id} registro={r} />
+            <RegistroCard
+              key={r._id}
+              registro={r}
+              onSentimentoUpdated={fetchRegistros}
+            />
           ))}
         </div>
       )}
