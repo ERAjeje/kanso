@@ -14,6 +14,7 @@ type Config struct {
 	FCMProjectID         string
 	FCMServiceAccountB64 string
 	NLPGrpAddr           string
+	NLPHTTPAddr          string
 	SchedulerAPIKey      string
 }
 
@@ -30,7 +31,8 @@ func Load() *Config {
 		FCMProjectID:         getEnv("FCM_PROJECT_ID", ""),
 		FCMServiceAccountB64: getEnv("FCM_SERVICE_ACCOUNT_B64", ""),
 		NLPGrpAddr:           getEnv("NLP_GRPC_ADDR", "nlp:50051"),
-		SchedulerAPIKey: getEnv("SCHEDULER_API_KEY", ""),
+		NLPHTTPAddr:          getEnv("NLP_HTTP_ADDR", "http://nlp:8000"),
+		SchedulerAPIKey:      getEnv("SCHEDULER_API_KEY", ""),
 	}
 }
 

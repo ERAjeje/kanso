@@ -2,9 +2,12 @@ package repository
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 )
 
@@ -689,6 +692,178 @@ func (c *CouchDB) FindRegistrosByPeriod(userSub, periodStart, periodEnd string) 
 
 // FindAnaliseByRegistroIds queries analysis documents by their associated registro IDs.
 // Accepts a slice of registro IDs and returns matching analise_nlp docs.
+// --- Training Repository Types ---
+
+// TreinamentoDoc represents a training example stored in the treinamento database.
+type TreinamentoDoc struct {
+	ID       string `json:"_id,omitempty"`
+	Rev      string `json:"_rev,omitempty"`
+	Type     string `json:"type"`
+	Texto    string `json:"texto"`
+	Label    string `json:"label"`
+	UserSub  string `json:"userSub"`
+	Origem   string `json:"origem"`
+	CriadoEm string `json:"criadoEm"`
+}
+
+// TrainingCheckpointDoc tracks the content hash and model version for change detection.
+type TrainingCheckpointDoc struct {
+	ID           string `json:"_id,omitempty"`
+	Rev          string `json:"_rev,omitempty"`
+	Type         string `json:"type"`
+	ContentHash  string `json:"contentHash"`
+	ModelVersion string `json:"modelVersion"`
+	UpdatedAt    string `json:"updatedAt"`
+}
+
+// --- Training Repository Methods ---
+
+// GetTrainingCheckpoint reads the training checkpoint document from the treinamento DB.
+// Returns nil if no checkpoint exists yet (HTTP 404).
+func (c *CouchDB) GetTrainingCheckpoint() (*TrainingCheckpointDoc, error) {
+	url := fmt.Sprintf("%s/"+DBTreinamento+"/checkpoint:training", c.baseURL)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("get training checkpoint: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("get training checkpoint status: %d", resp.StatusCode)
+	}
+
+	var doc TrainingCheckpointDoc
+	if err := json.NewDecoder(resp.Body).Decode(&doc); err != nil {
+		return nil, fmt.Errorf("decode training checkpoint: %w", err)
+	}
+	return &doc, nil
+}
+
+// SaveTrainingCheckpoint creates or updates the training checkpoint document.
+// Does a GET-then-PUT pattern to handle _rev for updates.
+func (c *CouchDB) SaveTrainingCheckpoint(hash, version string) error {
+	existing, err := c.GetTrainingCheckpoint()
+	if err != nil {
+		return fmt.Errorf("get existing checkpoint before save: %w", err)
+	}
+
+	doc := &TrainingCheckpointDoc{
+		Type:         "checkpoint",
+		ContentHash:  hash,
+		ModelVersion: version,
+		UpdatedAt:    time.Now().UTC().Format(time.RFC3339),
+	}
+
+	if existing != nil {
+		doc.ID = existing.ID
+		doc.Rev = existing.Rev
+	} else {
+		doc.ID = "checkpoint:training"
+	}
+
+	return c.putDoc(DBTreinamento, doc.ID, doc)
+}
+
+// GetTrainingData fetches all training documents from the treinamento database.
+func (c *CouchDB) GetTrainingData() ([]TreinamentoDoc, error) {
+	selector := map[string]interface{}{
+		"type": "treinamento",
+	}
+	query := mangoQuery{
+		Selector: selector,
+		Limit:    10000,
+	}
+
+	body, err := json.Marshal(query)
+	if err != nil {
+		return nil, fmt.Errorf("marshal query: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/"+DBTreinamento+"/_find", c.baseURL)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+	req.SetBasicAuth(c.adminUser, c.adminPass)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("find training data: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("find training data status: %d", resp.StatusCode)
+	}
+
+	var mResp mangoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&mResp); err != nil {
+		return nil, fmt.Errorf("decode response: %w", err)
+	}
+
+	docs := make([]TreinamentoDoc, 0, len(mResp.Docs))
+	for _, raw := range mResp.Docs {
+		var doc TreinamentoDoc
+		if err := json.Unmarshal(raw, &doc); err != nil {
+			return nil, fmt.Errorf("unmarshal training doc: %w", err)
+		}
+		docs = append(docs, doc)
+	}
+	return docs, nil
+}
+
+// ComputeTrainingHash computes a SHA256 hash of all training data.
+// Marshals all treinamento docs to JSON, sorts by ID for determinism, and returns the hex-encoded SHA256.
+func (c *CouchDB) ComputeTrainingHash() (string, error) {
+	docs, err := c.GetTrainingData()
+	if err != nil {
+		return "", fmt.Errorf("get training data for hash: %w", err)
+	}
+
+	// Sort by ID for deterministic hash
+	sort.Slice(docs, func(i, j int) bool {
+		return docs[i].ID < docs[j].ID
+	})
+
+	data, err := json.Marshal(docs)
+	if err != nil {
+		return "", fmt.Errorf("marshal for hash: %w", err)
+	}
+
+	hash := sha256.Sum256(data)
+	return hex.EncodeToString(hash[:]), nil
+}
+
+// HasTrainingChanged checks whether the training data has changed since the last checkpoint.
+// Returns (changed bool, hash string, error).
+func (c *CouchDB) HasTrainingChanged() (bool, string, error) {
+	currentHash, err := c.ComputeTrainingHash()
+	if err != nil {
+		return false, "", fmt.Errorf("compute current hash: %w", err)
+	}
+
+	cp, err := c.GetTrainingCheckpoint()
+	if err != nil {
+		return false, "", fmt.Errorf("get checkpoint: %w", err)
+	}
+
+	if cp == nil || cp.ContentHash != currentHash {
+		return true, currentHash, nil
+	}
+
+	return false, currentHash, nil
+}
+
 func (c *CouchDB) FindAnaliseByRegistroIds(ids []string) ([]AnaliseDoc, error) {
 	if len(ids) == 0 {
 		return []AnaliseDoc{}, nil
