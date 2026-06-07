@@ -6,7 +6,9 @@
 # ============================================================
 set -euo pipefail
 
-COMPOSE_FILE="infra/docker-compose.yml"
+COMPOSE_BASE="infra/docker-compose.yml"
+COMPOSE_OVERRIDE="infra/docker-compose.prod.yml"
+COMPOSE_FILES="-f $COMPOSE_BASE -f $COMPOSE_OVERRIDE"
 ENV_FILE="infra/.env.production"
 LOG_FILE="/tmp/kanso-deploy.log"
 
@@ -14,21 +16,21 @@ echo "=== Kanso Deploy ===" | tee "$LOG_FILE"
 
 cd /opt/kanso
 
-# 1. Pull latest code
+# 1. Pull latest code (frontend dist + configs)
 echo "[1/6] Pulling latest code..." | tee -a "$LOG_FILE"
 git pull origin master 2>&1 | tee -a "$LOG_FILE"
 
-# 2. Build images
-echo "[2/6] Building Docker images..." | tee -a "$LOG_FILE"
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build 2>&1 | tee -a "$LOG_FILE"
+# 2. Pull images from GCP Artifact Registry
+echo "[2/6] Pulling Docker images from GCP Artifact Registry..." | tee -a "$LOG_FILE"
+docker compose $COMPOSE_FILES pull 2>&1 | tee -a "$LOG_FILE"
 
 # 3. Stop old containers
 echo "[3/6] Stopping old containers..." | tee -a "$LOG_FILE"
-docker compose -f "$COMPOSE_FILE" down 2>&1 | tee -a "$LOG_FILE"
+docker compose $COMPOSE_FILES down 2>&1 | tee -a "$LOG_FILE"
 
 # 4. Start new containers
 echo "[4/6] Starting new containers..." | tee -a "$LOG_FILE"
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d 2>&1 | tee -a "$LOG_FILE"
+docker compose $COMPOSE_FILES --env-file "$ENV_FILE" up -d 2>&1 | tee -a "$LOG_FILE"
 
 # 5. Wait and health check
 echo "[5/6] Waiting for health checks..." | tee -a "$LOG_FILE"

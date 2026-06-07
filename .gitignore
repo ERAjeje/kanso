@@ -16,6 +16,7 @@ infra/certs/
 infra/traefik/certs/
 infra/traefik/acme.json
 infra/.env.production
+infra/secrets/
 
 # --- Private Keys (catch-all) ---
 *.key

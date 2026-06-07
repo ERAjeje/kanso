@@ -15,6 +15,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 ## Approved Plans
 
 | Plan ID | Description | Approved At | Executed |
+| 09-gcp-artifact-registry | Migrar deploy para GCP Artifact Registry — Makefile, docker-compose.prod.yml, service account, deploy.sh pull | 2026-06-07 | 2026-06-07 |
 | 10-sentiment-training | Sentiment Training — edição no History, coleta de dados, batch retraining, re-análise lazy | 2026-06-07 | 2026-06-07 |
 | 09-deploy-vps | Deploy VPS Hostinger — DNS, Traefik/Let's Encrypt, docker-compose produção, backup, deploy script | 2026-05-30 | — |
 | pwa-install-prompt | PWA install prompt — hook, banner, ícones, manifest | 2026-05-31 | 2026-05-31 | 
@@ -62,6 +63,8 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 
 ## Log
 
+| 2026-06-07 | 09-gcp-artifact-registry | approved | GCP Artifact Registry — Makefile, docker-compose.prod.yml, service account, deploy.sh |
+| 2026-06-07 | 09-gcp-artifact-registry | executed | 8 tasks: .dockerignore, Makefile, compose.prod.yml, deploy.sh, setup-vps.sh, .gitignore |
 | 2026-06-07 | 10-sentiment-training | approved | Sentiment Training — 4 waves, 13 tasks |
 | 2026-06-07 | 10-sentiment-training | executed | 11 commits, 94/94 testes, 24 files (+1533/-13) |
 | 2026-05-31 | fix-traefik-acme-vps | approved | Corrigir ACME challenge — remover redirect entrypoint, catch-all HTTP router |

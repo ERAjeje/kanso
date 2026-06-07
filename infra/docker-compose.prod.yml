@@ -1,0 +1,21 @@
+# Kanso Production Override
+# Uso: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Sobrescreve build: → image: para serviços custom do Kanso
+# Imagens hospedadas em africa-south1-docker.pkg.dev/kanso-496617/kanso-repo
+#
+# Serviços de terceiros (traefik, couchdb, frontend/nginx) não entram aqui
+# — usam imagens direto do Docker Hub.
+
+services:
+  chromedp:
+    image: africa-south1-docker.pkg.dev/kanso-496617/kanso-repo/chromedp:latest
+
+  api:
+    image: africa-south1-docker.pkg.dev/kanso-496617/kanso-repo/api:latest
+
+  scheduler:
+    image: africa-south1-docker.pkg.dev/kanso-496617/kanso-repo/scheduler:latest
+
+  nlp:
+    image: africa-south1-docker.pkg.dev/kanso-496617/kanso-repo/nlp:latest
