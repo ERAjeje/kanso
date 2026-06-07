@@ -15,7 +15,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 ## Approved Plans
 
 | Plan ID | Description | Approved At | Executed |
-| 10-sentiment-training | Sentiment Training — edição no History, coleta de dados, batch retraining, re-análise lazy | 2026-06-07 | — |
+| 10-sentiment-training | Sentiment Training — edição no History, coleta de dados, batch retraining, re-análise lazy | 2026-06-07 | 2026-06-07 |
 | 09-deploy-vps | Deploy VPS Hostinger — DNS, Traefik/Let's Encrypt, docker-compose produção, backup, deploy script | 2026-05-30 | — |
 | pwa-install-prompt | PWA install prompt — hook, banner, ícones, manifest | 2026-05-31 | 2026-05-31 | 
 | fix-security-p2-01-credenciais | P2-01: CouchDB password hardening | 2026-05-30 | 2026-05-30 |
@@ -63,6 +63,7 @@ Controlled by `gsd-orchestrator`. Tracks the approval lifecycle for all plans.
 ## Log
 
 | 2026-06-07 | 10-sentiment-training | approved | Sentiment Training — 4 waves, 13 tasks |
+| 2026-06-07 | 10-sentiment-training | executed | 11 commits, 94/94 testes, 24 files (+1533/-13) |
 | 2026-05-31 | fix-traefik-acme-vps | approved | Corrigir ACME challenge — remover redirect entrypoint, catch-all HTTP router |
 | 2026-05-30 | fix-security-p2-01-credenciais | approved | P2-01: CouchDB password hardening — remover fallback admin123 |
 | 2026-05-30 | fix-security-p2-01-credenciais | executed | docker-compose.yml: :-admin123 removido dos 3 serviços, validação obrigatória |
