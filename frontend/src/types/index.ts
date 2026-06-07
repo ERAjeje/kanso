@@ -60,3 +60,14 @@ export interface AnaliseNlpDoc {
 export interface RegistroWithAnalise extends RegistroDoc {
   analise?: AnaliseNlpDoc
 }
+
+export interface TreinamentoDoc {
+  _id: string
+  _rev?: string
+  type: 'treinamento'
+  texto: string
+  label: string
+  userId: string
+  origem: 'usuario' | 'curada'
+  criadoEm: string
+}
