@@ -26,7 +26,7 @@ import (
 )
 
 func ensureCouchDBDatabases(cfg *config.Config) error {
-	dbs := []string{repository.DBRegistros, repository.DBSentimentos, repository.DBPreferencias, repository.DBRelatorios, repository.DBUsuarios}
+	dbs := []string{repository.DBRegistros, repository.DBSentimentos, repository.DBPreferencias, repository.DBRelatorios, repository.DBUsuarios, repository.DBTreinamento}
 	for _, db := range dbs {
 		url := cfg.CouchDBURL + "/" + db
 		req, _ := http.NewRequest("PUT", url, bytes.NewReader([]byte{}))
@@ -104,7 +104,7 @@ func ensureValidateDocUpdate(cfg *config.Config) {
 	}
 	body, _ := json.Marshal(ddoc)
 
-	dbs := []string{repository.DBRegistros, repository.DBSentimentos, repository.DBPreferencias, repository.DBRelatorios, repository.DBUsuarios}
+	dbs := []string{repository.DBRegistros, repository.DBSentimentos, repository.DBPreferencias, repository.DBRelatorios, repository.DBUsuarios, repository.DBTreinamento}
 	for _, db := range dbs {
 		url := cfg.CouchDBURL + "/" + db + "/_design/security"
 		req, _ := http.NewRequest("PUT", url, bytes.NewReader(body))
@@ -212,6 +212,15 @@ func main() {
 	// Create treinamento service (works even without NLP client)
 	treinamentoSvc := service.NewTreinamentoService(couchRepo, nlpClient, cfg)
 	treinamentoHandler := handler.NewTreinamentoHandler(treinamentoSvc)
+
+	// Start weekly training scheduler
+	trainInterval := 168 * time.Hour // default: 7 days
+	if v := os.Getenv("TRAIN_INTERVAL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			trainInterval = d
+		}
+	}
+	treinamentoSvc.StartScheduler(context.Background(), trainInterval)
 
 	ensureCouchDBDatabases(cfg)
 	ensureCouchDBIndexes(cfg)
