@@ -14,6 +14,7 @@ const (
 	DBPreferencias = "preferencias"
 	DBRelatorios   = "relatorios"
 	DBUsuarios     = "usuarios"
+	DBTreinamento  = "treinamento"
 )
 
 type CouchDB struct {

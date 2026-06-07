@@ -57,6 +57,7 @@ function createSyncedDB(dbName: string): { local: PouchDB.Database; remote: Pouc
 export const { local: registrosDB } = createSyncedDB('registros')
 export const { local: sentimentosDB } = createSyncedDB('sentimentos')
 export const { local: preferenciasDB } = createSyncedDB('preferencias')
+export const { local: treinamentoDB } = createSyncedDB('treinamento')
 
 export function getUserId(): string {
   const jwt = authService.getStoredJWT()
