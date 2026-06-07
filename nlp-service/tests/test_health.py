@@ -16,3 +16,19 @@ def test_health_endpoint():
 def test_health_method():
     response = client.get("/health")
     assert response.headers["content-type"] == "application/json"
+
+
+# --- Training endpoints ---
+
+def test_model_version_endpoint():
+    response = client.get("/model/version")
+    assert response.status_code == 200
+    data = response.json()
+    assert "version" in data
+
+
+def test_train_endpoint_returns_json():
+    response = client.post("/train")
+    assert response.status_code == 200
+    data = response.json()
+    assert "status" in data
