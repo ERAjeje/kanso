@@ -54,6 +54,22 @@ export async function getRegistros(): Promise<RegistroWithAnalise[]> {
   }))
 }
 
+export async function updateRegistroSentimento(
+  registro: RegistroDoc,
+  sentimentoNome: string,
+  sentimentoId: string
+): Promise<RegistroDoc> {
+  const doc = await registrosDB.get(registro._id)
+  const updated: RegistroDoc = {
+    ...doc,
+    sentimentoNome,
+    sentimentoId,
+    updatedAt: new Date().toISOString(),
+  }
+  await registrosDB.put(updated)
+  return updated
+}
+
 export async function getSentimentos(): Promise<SentimentoDoc[]> {
   const result = await sentimentosDB.allDocs<SentimentoDoc>({ include_docs: true })
   return result.rows

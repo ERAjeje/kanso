@@ -1,8 +1,12 @@
 import { useState } from 'react'
+import { SentimentoEditor } from './SentimentoEditor'
+import { saveTrainingExample } from '../services/training'
+import { updateRegistroSentimento } from '../services/registros'
 import type { RegistroDoc, RegistroWithAnalise } from '../types'
 
 interface Props {
   registro: RegistroWithAnalise
+  onSentimentoUpdated?: () => void
 }
 
 const EMOTION_CHIP_COLORS: Record<string, { bg: string; text: string }> = {
@@ -44,11 +48,34 @@ function truncate(text: string, max = 80): string {
   return text.slice(0, max).trimEnd() + '…'
 }
 
-export function RegistroCard({ registro }: Props) {
+export function RegistroCard({ registro, onSentimentoUpdated }: Props) {
   const [expanded, setExpanded] = useState(false)
-  const hasSentimento = registro.sentimentoNome && registro.sentimentoNome.trim().length > 0
+  const [localSentimentoNome, setLocalSentimentoNome] = useState(registro.sentimentoNome)
+  const [localSentimentoId, setLocalSentimentoId] = useState(registro.sentimentoId)
+  const hasSentimento = localSentimentoNome && localSentimentoNome.trim().length > 0
   const preview = previewText(registro)
   const analise = registro.analise
+
+  const handleSentimentoSave = async (label: string) => {
+    // Combine text fields for training data
+    const combinedText = [registro.sensacoes, registro.contexto, registro.pensamentos]
+      .filter(Boolean)
+      .join(' ')
+
+    // Save training example
+    await saveTrainingExample(combinedText, label)
+
+    // Update registro in PouchDB
+    const sentimentId = `label-${label}`
+    await updateRegistroSentimento(registro, label, sentimentId)
+
+    // Update local state
+    setLocalSentimentoNome(label)
+    setLocalSentimentoId(sentimentId)
+
+    // Notify parent to refresh
+    onSentimentoUpdated?.()
+  }
 
   return (
     <div
@@ -62,7 +89,7 @@ export function RegistroCard({ registro }: Props) {
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <h3 className={`text-lg font-semibold ${hasSentimento ? 'text-gray-800' : 'text-gray-400 italic'}`}>
-            {hasSentimento ? registro.sentimentoNome : 'Buscando sentimento'}
+            {hasSentimento ? localSentimentoNome : 'Buscando sentimento'}
           </h3>
           <p className="text-sm text-gray-500 mt-0.5">{formatDate(registro.dataHora)}</p>
           {analise && (
@@ -95,7 +122,15 @@ export function RegistroCard({ registro }: Props) {
       {expanded && (
         <div className="mt-4 space-y-3 pt-3 border-t border-gray-100">
           <Field label="Sensações" value={registro.sensacoes} />
-          <Field label="Sentimento" value={hasSentimento ? registro.sentimentoNome : 'Buscando sentimento'} />
+          {localSentimentoId !== null ? (
+            <Field label="Sentimento" value={hasSentimento ? localSentimentoNome : 'Buscando sentimento'} />
+          ) : (
+            <SentimentoEditor
+              currentValue=""
+              disabled={false}
+              onSave={handleSentimentoSave}
+            />
+          )}
           <Field label="Contexto" value={registro.contexto} />
           <Field label="Pensamentos" value={registro.pensamentos} />
         </div>

@@ -6,6 +6,13 @@ import type { RegistroDoc } from '../types'
 
 const mockGetRegistros = vi.fn()
 
+vi.mock('../services/pouchdb', () => ({
+  registrosDB: { get: vi.fn(), put: vi.fn() },
+  sentimentosDB: { allDocs: vi.fn() },
+  treinamentoDB: { put: vi.fn() },
+  getUserId: () => 'test-user-123',
+}))
+
 vi.mock('../services/registros', () => ({
   getRegistros: (...args: any[]) => mockGetRegistros(...args),
   saveRegistro: vi.fn(),

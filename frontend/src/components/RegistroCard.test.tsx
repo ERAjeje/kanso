@@ -1,7 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { RegistroCard } from './RegistroCard'
 import type { RegistroDoc, RegistroWithAnalise, AnaliseNlpDoc } from '../types'
+
+// Mock pouchdb to prevent PouchDB initialization in jsdom
+vi.mock('../services/pouchdb', () => ({
+  registrosDB: { get: vi.fn(), put: vi.fn() },
+  sentimentosDB: { allDocs: vi.fn() },
+  treinamentoDB: { put: vi.fn() },
+  getUserId: () => 'test-user-123',
+}))
 
 function makeRegistro(overrides: Partial<RegistroDoc> = {}): RegistroDoc {
   return {
@@ -76,6 +84,37 @@ describe('RegistroCard', () => {
     fireEvent.click(screen.getByRole('button'))
     const labels = screen.getAllByText('Buscando sentimento')
     expect(labels.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shows SentimentoEditor when expanded and sentimentoId is null', () => {
+    const onSentimentoUpdated = vi.fn()
+    render(
+      <RegistroCard
+        registro={makeRegistro({ sentimentoId: null, sentimentoNome: '' })}
+        onSentimentoUpdated={onSentimentoUpdated}
+      />
+    )
+    // Click to expand
+    fireEvent.click(screen.getByRole('button'))
+    // Should show the SentimentoEditor placeholder
+    expect(screen.getByPlaceholderText('Selecionar sentimento')).toBeDefined()
+  })
+
+  it('shows static Sentimento field when sentimentoId exists', () => {
+    const onSentimentoUpdated = vi.fn()
+    render(
+      <RegistroCard
+        registro={makeRegistro({ sentimentoId: 'label-ansiedade', sentimentoNome: 'ansiedade' })}
+        onSentimentoUpdated={onSentimentoUpdated}
+      />
+    )
+    // Click to expand
+    fireEvent.click(screen.getByRole('button'))
+    // Should still show the static Sentimento field, not the editor
+    expect(screen.queryByPlaceholderText('Selecionar sentimento')).toBeNull()
+    // ansiedade appears in heading and chips (multiple times) — use getAllByText
+    const ansiedadeElements = screen.getAllByText('ansiedade')
+    expect(ansiedadeElements.length).toBeGreaterThanOrEqual(1)
   })
 })
 

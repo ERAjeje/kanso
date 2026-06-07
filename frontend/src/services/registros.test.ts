@@ -1,16 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+const mockRegistroGet = vi.fn()
 const mockRegistroPut = vi.fn()
 const mockSentimentoPut = vi.fn()
 const mockAllDocs = vi.fn()
 
 vi.mock('../services/pouchdb', () => ({
-  registrosDB: { allDocs: mockAllDocs, put: mockRegistroPut },
+  registrosDB: { allDocs: mockAllDocs, put: mockRegistroPut, get: mockRegistroGet },
   sentimentosDB: { allDocs: mockAllDocs, put: mockSentimentoPut },
   getUserId: () => 'test-user-123',
 }))
 
-const { saveRegistro, saveSentimento, getSentimentos, getRegistros } = await import('./registros')
+const { saveRegistro, saveSentimento, getSentimentos, getRegistros, updateRegistroSentimento } = await import('./registros')
 
 describe('saveRegistro', () => {
   beforeEach(() => {
@@ -59,6 +60,47 @@ describe('saveSentimento', () => {
         userId: 'test-user-123',
       })
     )
+  })
+})
+
+describe('updateRegistroSentimento', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('updates sentimentoNome, sentimentoId, and updatedAt', async () => {
+    const existingRegistro = {
+      _id: 'reg-1',
+      _rev: '1-abc',
+      type: 'registro' as const,
+      userId: 'u1',
+      dataHora: '2026-05-17T14:30:00.000Z',
+      sensacoes: 'coração acelerado',
+      sentimentoId: null,
+      sentimentoNome: '',
+      contexto: 'reunião',
+      pensamentos: 'nervoso',
+      createdAt: '2026-05-17T14:30:00.000Z',
+      updatedAt: '2026-05-17T14:30:00.000Z',
+    }
+
+    mockRegistroGet.mockResolvedValue(existingRegistro)
+    mockRegistroPut.mockResolvedValue({ ok: true, id: 'reg-1', rev: '2-def' })
+
+    const result = await updateRegistroSentimento(existingRegistro, 'ansiedade', 'label-ansiedade')
+
+    expect(mockRegistroGet).toHaveBeenCalledWith('reg-1')
+    expect(mockRegistroPut).toHaveBeenCalledWith(
+      expect.objectContaining({
+        _id: 'reg-1',
+        sentimentoNome: 'ansiedade',
+        sentimentoId: 'label-ansiedade',
+      })
+    )
+    expect(result.sentimentoNome).toBe('ansiedade')
+    expect(result.sentimentoId).toBe('label-ansiedade')
+    expect(result.updatedAt).toBeDefined()
+    expect(result.updatedAt).not.toBe(existingRegistro.updatedAt)
   })
 })
 
