@@ -21,7 +21,7 @@ describe('TabBar', () => {
     expect(TabBarModule.TabBar).toBeDefined()
   })
 
-  it('marks active tab with indigo-600 class', () => {
+  it('marks active tab with text-primary class', () => {
     render(
       <MemoryRouter initialEntries={['/register']}>
         <TabBar />
@@ -31,6 +31,6 @@ describe('TabBar', () => {
     const links = screen.getAllByRole('link')
     const registerLink = links.find(l => l.textContent?.includes('Registrar'))
     expect(registerLink).toBeDefined()
-    expect(registerLink?.className).toContain('text-indigo-600')
+    expect(registerLink?.className).toContain('text-primary')
   })
 })

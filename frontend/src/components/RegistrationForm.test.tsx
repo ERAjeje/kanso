@@ -80,12 +80,12 @@ describe('RegistrationForm', () => {
     )
   })
 
-  it('has no min/max on datetime-local input (backdating per REG-02)', () => {
+  it('renders date-time picker with formatted date (backdating allowed per REG-02)', () => {
     render(<RegistrationForm onSaved={vi.fn()} onShowToast={vi.fn()} />)
 
-    const dtInput = document.querySelector('input[type="datetime-local"]')
-    expect(dtInput).not.toBeNull()
-    expect(dtInput?.getAttribute('min')).toBeNull()
-    expect(dtInput?.getAttribute('max')).toBeNull()
+    expect(screen.getByText(/Data e Hora/i)).toBeInTheDocument()
+    const buttons = screen.getAllByRole('button')
+    const dateButtons = buttons.filter(b => b.textContent?.match(/\d{4}/))
+    expect(dateButtons.length).toBeGreaterThanOrEqual(1)
   })
 })

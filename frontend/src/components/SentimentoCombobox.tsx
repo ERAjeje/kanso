@@ -4,6 +4,16 @@ import { ChevronsUpDown } from 'lucide-react'
 import { getSentimentos, saveSentimento } from '../services/registros'
 import type { SentimentoDoc } from '../types'
 
+const FALLBACK_EMOTIONS = [
+  'alegria', 'amor', 'ansiedade', 'culpa', 'gratidão',
+  'medo', 'neutro', 'nojo', 'raiva', 'saudade',
+  'surpresa', 'tristeza', 'vergonha',
+]
+
+function isFallbackItem(id: string): boolean {
+  return id.startsWith('fallback-')
+}
+
 interface Props {
   onChange: (nome: string, id: string | null) => void
 }
@@ -14,7 +24,21 @@ export function SentimentoCombobox({  onChange }: Props) {
   const justSelected = useRef(false)
 
   useEffect(() => {
-    getSentimentos().then(setSentimentos)
+    getSentimentos().then(result => {
+      if (result.length === 0) {
+        setSentimentos(
+          FALLBACK_EMOTIONS.sort((a, b) => a.localeCompare(b, 'pt-BR')).map(nome => ({
+            _id: `fallback-${nome}`,
+            type: 'sentimento' as const,
+            userId: '',
+            nome,
+            criadoEm: '',
+          }))
+        )
+      } else {
+        setSentimentos(result)
+      }
+    })
   }, [])
 
   const filtered = query === ''
@@ -23,12 +47,22 @@ export function SentimentoCombobox({  onChange }: Props) {
         s.nome.toLowerCase().includes(query.toLowerCase())
       )
 
-  const handleSelect = (nome: string | null) => {
+  const handleSelect = async (nome: string | null) => {
     if (!nome) return
     justSelected.current = true
     setTimeout(() => { justSelected.current = false }, 0)
     const match = sentimentos.find(s => s.nome === nome)
-    onChange(nome, match?._id ?? null)
+    if (match && isFallbackItem(match._id)) {
+      const doc = await saveSentimento(nome)
+      setSentimentos(prev =>
+        [...prev.filter(s => s.nome !== nome), doc].sort((a, b) =>
+          a.nome.localeCompare(b.nome, 'pt-BR')
+        )
+      )
+      onChange(doc.nome, doc._id)
+    } else {
+      onChange(nome, match?._id ?? null)
+    }
   }
 
   const handleBlur = () => {
@@ -46,7 +80,7 @@ export function SentimentoCombobox({  onChange }: Props) {
     <Combobox value={query} onChange={handleSelect} nullable>
       <div className="relative">
         <Combobox.Input
-          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="Digite ou selecione um sentimento..."
           onChange={e => setQuery(e.target.value)}
           onBlur={handleBlur}
@@ -60,7 +94,7 @@ export function SentimentoCombobox({  onChange }: Props) {
               key={s._id}
               value={s.nome}
               className={({ active }) =>
-                `cursor-pointer px-4 py-2 ${active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-900'}`
+                `cursor-pointer px-4 py-2 ${active ? 'bg-primary/10 text-primary' : 'text-gray-900'}`
               }
             >
               {s.nome}

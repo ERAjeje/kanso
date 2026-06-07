@@ -52,7 +52,7 @@ describe('SentimentoEditor', () => {
 
   it('passes correct onSave reference to component', () => {
     const onSave = vi.fn()
-    const { rerender } = render(<SentimentoEditor currentValue="" disabled={false} onSave={onSave} />)
+    render(<SentimentoEditor currentValue="" disabled={false} onSave={onSave} />)
 
     // Directly call onSave to verify it works
     onSave('test-emotion')

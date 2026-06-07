@@ -56,7 +56,7 @@ export function Profile() {
               <button
                 onClick={toggleEnabled}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  prefs?.enabled ? 'bg-indigo-600' : 'bg-gray-200'
+                  prefs?.enabled ? 'bg-primary' : 'bg-gray-200'
                 }`}
               >
                 <span
@@ -84,7 +84,7 @@ export function Profile() {
                     type="time"
                     value={time}
                     onChange={e => updateTime(index, e.target.value)}
-                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               ))}

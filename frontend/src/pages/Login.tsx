@@ -118,9 +118,9 @@ export function Login() {
   }, [handleGoogleSignIn])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-white">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-background">
       <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
-        <h1 className="text-3xl font-bold text-indigo-600 mb-2">Kanso</h1>
+        <h1 className="text-3xl font-bold text-primary mb-2">Kanso</h1>
         <p className="text-gray-500 mb-8">Diário Emocional</p>
         <p className="text-sm text-gray-600 mb-6">
           Faça login com sua conta Google para começar

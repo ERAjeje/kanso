@@ -120,7 +120,7 @@ export function RegistroCard({ registro, onSentimentoUpdated }: Props) {
       )}
 
       {expanded && (
-        <div className="mt-4 space-y-3 pt-3 border-t border-gray-100">
+        <div className="mt-4 space-y-3 pt-3 border-t border-gray-100" onClick={e => e.stopPropagation()}>
           <Field label="Sensações" value={registro.sensacoes} />
           {localSentimentoId !== null ? (
             <Field label="Sentimento" value={hasSentimento ? localSentimentoNome : 'Buscando sentimento'} />

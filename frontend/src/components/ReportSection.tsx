@@ -86,7 +86,7 @@ export function ReportSection() {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
       <div className="flex items-center gap-2 mb-4">
-        <FileText className="h-5 w-5 text-indigo-600" />
+        <FileText className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold text-gray-800">Relatórios</h2>
       </div>
 
@@ -95,7 +95,7 @@ export function ReportSection() {
         <>
           <button
             onClick={handleGenerate}
-            className="w-full bg-indigo-600 text-white rounded-lg py-3 font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="w-full bg-primary text-white rounded-lg py-3 font-medium hover:brightness-110 disabled:opacity-50 transition-all"
           >
             Gerar Relatório
           </button>
@@ -111,7 +111,7 @@ export function ReportSection() {
       {state === 'generating' && (
         <button
           disabled
-          className="w-full bg-indigo-600 text-white rounded-lg py-3 font-medium opacity-50 cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-primary text-white rounded-lg py-3 font-medium opacity-50 cursor-not-allowed transition-all flex items-center justify-center gap-2"
         >
           <Loader className="h-5 w-5 animate-spin" />
           Gerando...
@@ -123,7 +123,7 @@ export function ReportSection() {
         <div className="space-y-3">
           <button
             disabled
-            className="w-full bg-indigo-600 text-white rounded-lg py-3 font-medium opacity-50 cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-primary text-white rounded-lg py-3 font-medium opacity-50 cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
             <Loader className="h-5 w-5 animate-spin" />
             Gerando...
@@ -150,7 +150,7 @@ export function ReportSection() {
 
           <button
             onClick={() => handleDownload(latestReport._id)}
-            className="w-full bg-indigo-600 text-white rounded-lg py-3 font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-primary text-white rounded-lg py-3 font-medium hover:brightness-110 transition-all flex items-center justify-center gap-2"
           >
             <Download className="h-5 w-5" />
             Baixar PDF
@@ -178,7 +178,7 @@ export function ReportSection() {
 
           <button
             onClick={handleReset}
-            className="w-full bg-indigo-600 text-white rounded-lg py-3 font-medium hover:bg-indigo-700 transition-colors"
+            className="w-full bg-primary text-white rounded-lg py-3 font-medium hover:brightness-110 transition-all"
           >
             Tentar novamente
           </button>
@@ -205,7 +205,7 @@ export function ReportSection() {
                   {report.status === 'done' && (
                     <button
                       onClick={() => handleDownload(report._id)}
-                      className="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+                      className="text-primary hover:text-primary/80 font-medium flex items-center gap-1"
                     >
                       <Download className="h-4 w-4" />
                       Baixar

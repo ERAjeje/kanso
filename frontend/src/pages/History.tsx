@@ -45,7 +45,7 @@ export function History() {
             <p className="text-red-500 mb-4">{error}</p>
             <button
               onClick={fetchRegistros}
-              className="bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-indigo-700 transition-colors"
+              className="bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium hover:brightness-110 transition-all"
             >
               Tentar novamente
             </button>

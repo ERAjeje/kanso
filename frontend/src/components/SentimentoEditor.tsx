@@ -72,7 +72,7 @@ export function SentimentoEditor({ currentValue, disabled, onSave }: SentimentoE
       >
         <div className="relative mt-1">
           <Combobox.Input
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Selecionar sentimento"
             onChange={e => setQuery(e.target.value)}
           />
@@ -85,7 +85,7 @@ export function SentimentoEditor({ currentValue, disabled, onSave }: SentimentoE
                 key={emotion}
                 value={emotion}
                 className={({ active }) =>
-                  `cursor-pointer px-4 py-2 ${active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-900'}`
+                  `cursor-pointer px-4 py-2 ${active ? 'bg-primary/10 text-primary' : 'text-gray-900'}`
                 }
               >
                 {emotion}
